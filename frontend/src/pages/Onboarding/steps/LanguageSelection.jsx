@@ -15,11 +15,7 @@ const LanguageSelection = ({ onNext, onBack, onboardingData, updateData }) => {
     en: { plant: '🌽', gradient: 'from-blue-400 to-blue-600' },
     es: { plant: '🌶️', gradient: 'from-red-400 to-orange-500' },
     fr: { plant: '🥖', gradient: 'from-purple-400 to-pink-500' },
-    hi: { plant: '🌾', gradient: 'from-yellow-400 to-orange-500' },
-    sw: { plant: '🍌', gradient: 'from-green-400 to-green-600' },
-    am: { plant: '☕', gradient: 'from-amber-600 to-yellow-600' },
-    yo: { plant: '🍠', gradient: 'from-orange-400 to-red-500' },
-    ha: { plant: '🥜', gradient: 'from-amber-500 to-orange-600' }
+    hi: { plant: '🌾', gradient: 'from-yellow-400 to-orange-500' }
   }
 
   const handleLanguageSelect = async (languageCode) => {

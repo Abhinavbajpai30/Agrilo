@@ -27,15 +27,15 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 50 * 1024 * 1024, // 50MB limit (for videos)
     files: 5 // Max 5 files per request
   },
   fileFilter: (req, file, cb) => {
-    // Allow only image files
-    if (file.mimetype.startsWith('image/')) {
+    // Allow image and video files
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error('Only image and video files are allowed'), false);
     }
   }
 });
@@ -165,18 +165,30 @@ router.post('/upload', authenticateUser, upload.array('images', 5), asyncHandler
       // Generate unique filename
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(2, 15);
-      const filename = `diagnosis_${timestamp}_${randomString}.jpg`;
+      const isVideo = file.mimetype.startsWith('video/');
+      const extension = isVideo ? '.mp4' : '.jpg'; // Simplified extension handling
+      const filename = `diagnosis_${timestamp}_${randomString}${extension}`;
       const filepath = path.join(uploadsDir, filename);
 
-      // Process and optimize image with Sharp
-      await sharp(file.buffer)
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 80 })
-        .toFile(filepath);
+      if (isVideo) {
+        // Save video directly without processing
+        await fs.writeFile(filepath, file.buffer);
+      } else {
+        // Process and optimize image with Sharp
+        await sharp(file.buffer)
+          .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toFile(filepath);
+      }
 
-      // Validate image quality (basic checks)
-      const metadata = await sharp(file.buffer).metadata();
-      const quality = await assessImageQuality(metadata, file.buffer);
+      // Validate image quality (basic checks) - Skip for video for now
+      let metadata = {};
+      let quality = { score: 85, overall: 'good' }; // Default for video
+
+      if (!isVideo) {
+        metadata = await sharp(file.buffer).metadata();
+        quality = await assessImageQuality(metadata, file.buffer);
+      }
 
       processedImages.push({
         filename,
@@ -184,10 +196,12 @@ router.post('/upload', authenticateUser, upload.array('images', 5), asyncHandler
         path: filepath,
         size: file.size,
         quality,
+        quality,
         metadata: {
-          width: metadata.width,
-          height: metadata.height,
-          format: metadata.format
+          width: isVideo ? 1920 : metadata.width, // Mock metadata for video
+          height: isVideo ? 1080 : metadata.height,
+          format: isVideo ? 'mp4' : metadata.format,
+          mimetype: file.mimetype // Store mimetype
         }
       });
     }
@@ -292,8 +306,17 @@ router.post('/analyze', authenticateUser, [
 
     let analysisResults;
     try {
-      analysisResults = await cropHealthApi.analyzeCropImage(
-        imageFiles[0], // Primary image
+      // Pass the whole image object which now includes mimetype (added in metadata or needs to be passed)
+      // Actually we stored it in processedImages.metadata.mimetype, but the session stores the whole object.
+      // Let's reconstruct the file object expected by analyzeCropHealth
+      const fileToAnalyze = {
+        path: imageFiles[0],
+        mimetype: uploadSession.images[0].metadata.mimetype || 'image/jpeg',
+        filename: uploadSession.images[0].filename
+      };
+
+      analysisResults = await cropHealthApi.analyzeCropHealth(
+        fileToAnalyze,
         cropType || 'unknown'
       );
 
@@ -352,15 +375,7 @@ router.post('/analyze', authenticateUser, [
     return success(res, 'Crop analysis completed successfully', {
       diagnosis: {
         id: `temp_${Date.now()}`,
-        confidence: analysisResults.confidence,
-        primaryIssue: analysisResults.primaryIssue,
-        severity: analysisResults.severity,
-        plantHealth: analysisResults.plantInfo?.plantHealth || 'good',
-        recommendations: {
-          immediate: analysisResults.recommendations?.immediate || [],
-          preventive: analysisResults.recommendations?.preventive || [],
-          longTerm: analysisResults.recommendations?.longTerm || []
-        },
+        ...analysisResults,
         createdAt: new Date()
       },
       analysisMetadata: {

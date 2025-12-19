@@ -20,19 +20,19 @@ const { connectDB } = require('./config/database');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
+// Import middleware
+const { addRequestContext } = require('./middleware/auth');
+const { trackResponseTime, attachResponseHelpers } = require('./utils/apiResponse');
+
 // Import routes
+const healthRoutes = require('./routes/health');
 const authRoutes = require('./routes/auth');
 const farmRoutes = require('./routes/farm');
 const diagnosisRoutes = require('./routes/diagnosis');
 const irrigationRoutes = require('./routes/irrigation');
 const planningRoutes = require('./routes/planning');
-const healthRoutes = require('./routes/health');
 const onboardingRoutes = require('./routes/onboarding');
 const dashboardRoutes = require('./routes/dashboard');
-
-// Import middleware
-const { addRequestContext } = require('./middleware/auth');
-const { trackResponseTime, attachResponseHelpers } = require('./utils/apiResponse');
 
 // Initialize Express app
 const app = express();
@@ -147,6 +147,7 @@ app.use('/api/irrigation', irrigationRoutes);
 app.use('/api/planning', planningRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/insights', require('./routes/insights'));
 
 // Catch-all route for undefined routes
 app.all('*', (req, res) => {

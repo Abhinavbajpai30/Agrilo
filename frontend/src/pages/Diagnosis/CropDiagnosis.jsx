@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   CameraIcon,
   PhotoIcon,
   MagnifyingGlassIcon,
@@ -17,7 +17,7 @@ import apiService from '../../services/api'
 
 const CropDiagnosis = () => {
   const { user, isAuthenticated } = useAuth()
-  
+
 
   const [currentStep, setCurrentStep] = useState('method') // method, camera, upload, analysis, results
   const [selectedMethod, setSelectedMethod] = useState('camera')
@@ -30,13 +30,13 @@ const CropDiagnosis = () => {
   const [showCelebration, setShowCelebration] = useState(false)
   const [currentSymptomStep, setCurrentSymptomStep] = useState(0)
   const [symptomResponses, setSymptomResponses] = useState({})
-  
+
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const fileInputRef = useRef(null)
   const [stream, setStream] = useState(null)
   const [isCameraReady, setIsCameraReady] = useState(false)
-  
+
   // Diagnosis statistics for gamification
   const [userStats, setUserStats] = useState({
     totalDiagnoses: user?.appUsage?.totalDiagnoses || 0,
@@ -61,7 +61,7 @@ const CropDiagnosis = () => {
       // Also add class to any floating navigation elements
       const floatingNavs = document.querySelectorAll('[class*="fixed bottom-6"]')
       floatingNavs.forEach(nav => nav.classList.add('camera-hidden'))
-      
+
       // Prevent scrolling and set viewport for mobile
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
@@ -72,7 +72,7 @@ const CropDiagnosis = () => {
       // Remove class from floating navigation elements
       const floatingNavs = document.querySelectorAll('[class*="fixed bottom-6"]')
       floatingNavs.forEach(nav => nav.classList.remove('camera-hidden'))
-      
+
       // Restore scrolling
       document.body.style.overflow = ''
       document.body.style.position = ''
@@ -84,7 +84,7 @@ const CropDiagnosis = () => {
       document.body.classList.remove('camera-active')
       const floatingNavs = document.querySelectorAll('[class*="fixed bottom-6"]')
       floatingNavs.forEach(nav => nav.classList.remove('camera-hidden'))
-      
+
       // Restore scrolling
       document.body.style.overflow = ''
       document.body.style.position = ''
@@ -96,7 +96,7 @@ const CropDiagnosis = () => {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: 'environment', // Use back camera
           width: { ideal: 1920 },
           height: { ideal: 1080 }
@@ -170,10 +170,11 @@ const CropDiagnosis = () => {
 
       let uploadResponse;
       let analysisResponse;
-      
+
       try {
         uploadResponse = await apiService.post('/diagnosis/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000 // 60 seconds for larger video uploads
         })
       } catch (error) {
         console.error('Upload request failed:', error);
@@ -183,19 +184,20 @@ const CropDiagnosis = () => {
       if (uploadResponse.data?.status === 'success') {
         const uploadId = uploadResponse.data.message?.uploadId
         setUploadId(uploadId)
-        
+
         // Analyze the uploaded images
         const analysisPayload = {
           uploadId: uploadId,
           cropType: 'unknown', // Could be selected by user
           additionalInfo: 'Mobile app diagnosis'
         }
-        
+
         try {
           analysisResponse = await apiService.post('/diagnosis/analyze', analysisPayload, {
             headers: {
               'Content-Type': 'application/json'
-            }
+            },
+            timeout: 60000 // 60 seconds for AI analysis
           })
         } catch (error) {
           console.error('Analysis request failed:', error);
@@ -259,13 +261,14 @@ const CropDiagnosis = () => {
 
   const handleFileUpload = (event) => {
     const files = Array.from(event.target.files)
-    const imageFiles = files.map(file => ({
+    const mediaFiles = files.map(file => ({
       file,
       preview: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image',
       id: Date.now() + Math.random()
     }))
-    setCapturedImages([...capturedImages, ...imageFiles])
-    setCurrentStep('camera')
+    setCapturedImages([...capturedImages, ...mediaFiles])
+    setCurrentStep('camera') // Reusing camera view for preview for now
   }
 
   const removeImage = (id) => {
@@ -333,7 +336,7 @@ const CropDiagnosis = () => {
           <h1 className="text-3xl font-bold text-gray-800">AI Crop Doctor</h1>
         </div>
         <p className="text-gray-600 mb-6">Get instant diagnosis for your plants with AI-powered analysis</p>
-        
+
         {/* User Stats */}
         <div className="flex justify-center space-x-6 mb-8">
           <div className="text-center">
@@ -377,7 +380,7 @@ const CropDiagnosis = () => {
           >
             {/* Gradient Background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${method.gradient} opacity-5`}></div>
-            
+
             <div className="relative z-10">
               <div className="flex items-center space-x-4 mb-4">
                 <div className={`w-16 h-16 bg-gradient-to-br ${method.gradient} rounded-2xl flex items-center justify-center`}>
@@ -388,9 +391,9 @@ const CropDiagnosis = () => {
                   <p className="text-sm text-gray-500">{method.subtitle}</p>
                 </div>
               </div>
-              
+
               <p className="text-gray-600 mb-4">{method.description}</p>
-              
+
               <div className="space-y-2">
                 {method.features.map((feature, idx) => (
                   <div key={idx} className="flex items-center space-x-2">
@@ -408,7 +411,7 @@ const CropDiagnosis = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         multiple
         onChange={handleFileUpload}
         className="hidden"
@@ -429,6 +432,9 @@ const CropDiagnosis = () => {
         <ArrowLeftIcon className="w-6 h-6 text-white" />
       </motion.button>
 
+      {/* ... existing camera UI ... */}
+
+
       {/* Image Counter - Floating */}
       <div className="absolute top-6 right-6 z-20 w-12 h-12 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 safe-top">
         <span className="text-white text-sm font-semibold">{capturedImages.length}</span>
@@ -444,23 +450,23 @@ const CropDiagnosis = () => {
           className="w-full h-full object-cover"
         />
         <canvas ref={canvasRef} className="hidden" />
-        
+
         {/* Camera Overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
           {/* Focus Ring */}
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.05, 1],
               opacity: [0.7, 1, 0.7]
             }}
-            transition={{ 
-              duration: 2, 
+            transition={{
+              duration: 2,
               repeat: Infinity,
               ease: "easeInOut"
             }}
             className="w-72 h-72 border-4 border-white/60 rounded-3xl"
           />
-          
+
           {/* Center Guidelines */}
           <div className="absolute w-72 h-72 pointer-events-none">
             <div className="absolute top-1/2 left-0 right-0 h-px bg-white/40"></div>
@@ -488,9 +494,13 @@ const CropDiagnosis = () => {
                   key={img.id}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/40 shadow-lg"
+                  className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white/40 shadow-lg relative"
                 >
-                  <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                  {img.type === 'video' ? (
+                    <video src={img.preview} className="w-full h-full object-cover" muted />
+                  ) : (
+                    <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -558,12 +568,12 @@ const CropDiagnosis = () => {
       >
         {/* Plant Growing Animation */}
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.1, 1],
             rotate: [0, 2, -2, 0]
           }}
-          transition={{ 
-            duration: 2, 
+          transition={{
+            duration: 2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
@@ -571,10 +581,10 @@ const CropDiagnosis = () => {
         >
           🌱
         </motion.div>
-        
+
         <h2 className="text-2xl font-bold text-gray-800 mb-4">AI Analysis in Progress</h2>
         <p className="text-gray-600 mb-8">Our AI is carefully examining your plant photos...</p>
-        
+
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
           <motion.div
@@ -584,9 +594,9 @@ const CropDiagnosis = () => {
             transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
-        
+
         <p className="text-lg font-semibold text-teal-600 mb-8">{Math.round(analysisProgress)}% Complete</p>
-        
+
         {/* Analysis Steps */}
         <div className="space-y-3 text-left">
           {[
@@ -597,9 +607,8 @@ const CropDiagnosis = () => {
           ].map((item, index) => (
             <motion.div
               key={index}
-              className={`flex items-center space-x-3 p-3 rounded-lg ${
-                item.completed ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
-              }`}
+              className={`flex items-center space-x-3 p-3 rounded-lg ${item.completed ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                }`}
               animate={{ scale: item.completed ? 1.02 : 1 }}
             >
               {item.completed ? (
@@ -652,37 +661,36 @@ const CropDiagnosis = () => {
               className="bg-white rounded-3xl p-8 shadow-xl border border-white/40 mb-6"
             >
               <div className="flex items-start space-x-6">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-                  diagnosisResults.severity === 'high' ? 'bg-red-100' :
-                  diagnosisResults.severity === 'medium' ? 'bg-yellow-100' :
-                  'bg-green-100'
-                }`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${diagnosisResults.severity === 'high' || diagnosisResults.severity === 'critical' ? 'bg-red-100' :
+                    diagnosisResults.severity === 'medium' ? 'bg-yellow-100' :
+                      'bg-green-100'
+                  }`}>
                   <span className="text-2xl">
-                    {diagnosisResults.severity === 'high' ? '🚨' :
-                     diagnosisResults.severity === 'medium' ? '⚠️' : '✅'}
+                    {diagnosisResults.severity === 'high' || diagnosisResults.severity === 'critical' ? '🚨' :
+                      diagnosisResults.severity === 'medium' ? '⚠️' : '✅'}
                   </span>
                 </div>
-                
+
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">
                     {diagnosisResults.primaryIssue}
                   </h2>
                   <p className="text-gray-600 mb-4">
-                    Plant Health: {diagnosisResults.plantHealth}
+                    Plant Health: <span className="capitalize font-medium text-teal-600">{diagnosisResults.plantInfo?.plantHealth || diagnosisResults.plantHealth || 'Unknown'}</span>
                   </p>
-                  
+
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-semibold text-gray-500">Confidence:</span>
                       <div className="flex items-center space-x-1">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-gradient-to-r from-teal-400 to-cyan-500 h-2 rounded-full"
                             style={{ width: `${diagnosisResults.confidence}%` }}
                           />
                         </div>
                         <span className="text-sm font-semibold text-teal-600">
-                          {diagnosisResults.confidence}%
+                          {diagnosisResults.confidence || 0}%
                         </span>
                       </div>
                     </div>
@@ -702,9 +710,9 @@ const CropDiagnosis = () => {
                 <span>💊</span>
                 <span>Treatment Plan</span>
               </h3>
-              
+
               <div className="space-y-4">
-                {diagnosisResults.recommendations.immediate?.map((rec, index) => (
+                {diagnosisResults.recommendations?.immediate?.map((rec, index) => (
                   <motion.div
                     key={index}
                     initial={{ x: -20, opacity: 0 }}
@@ -717,11 +725,10 @@ const CropDiagnosis = () => {
                       <h4 className="font-semibold text-gray-800">{rec.title || `Step ${index + 1}`}</h4>
                       <p className="text-gray-600">{rec.description || rec}</p>
                       {rec.urgency && (
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-2 ${
-                          rec.urgency === 'high' ? 'bg-red-100 text-red-700' :
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-2 ${rec.urgency === 'high' ? 'bg-red-100 text-red-700' :
                           rec.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
+                            'bg-green-100 text-green-700'
+                          }`}>
                           {rec.urgency} priority
                         </span>
                       )}
@@ -746,7 +753,7 @@ const CropDiagnosis = () => {
               >
                 New Diagnosis
               </motion.button>
-              
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -754,7 +761,7 @@ const CropDiagnosis = () => {
               >
                 Save to History
               </motion.button>
-              
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -801,10 +808,10 @@ const CropDiagnosis = () => {
             <div className="text-8xl mb-6">🔧</div>
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Feature Coming Soon</h2>
             <p className="text-gray-600 mb-8 text-lg">
-              We're working hard to bring you an advanced symptom checker with AI-powered diagnosis. 
+              We're working hard to bring you an advanced symptom checker with AI-powered diagnosis.
               This feature will help you identify plant problems step-by-step.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="text-center">
                 <div className="text-4xl mb-2">🤖</div>

@@ -83,32 +83,32 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
       plantingTip: 'Requires flooded fields and consistent water'
     },
     {
-      id: 'cassava',
-      name: 'Cassava',
-      emoji: '🍠',
-      color: 'from-orange-400 to-red-500',
-      image: 'https://images.unsplash.com/photo-1621332104012-e59bc9a7ef00?w=400',
-      season: 'All Season',
-      difficulty: 'Easy',
-      growthDays: 240,
-      yieldPerHectare: '10-20 tons',
-      nutritionFacts: ['High carbs', 'Vitamin C', 'Calcium'],
-      benefits: ['Drought resistant', 'Food security', 'Easy to grow'],
-      plantingTip: 'Very hardy, grows in poor soils'
+      id: 'wheat',
+      name: 'Wheat',
+      emoji: '🌾',
+      color: 'from-yellow-200 to-yellow-500',
+      image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400',
+      season: 'Winter Season',
+      difficulty: 'Medium',
+      growthDays: 120,
+      yieldPerHectare: '4-6 tons',
+      nutritionFacts: ['Carbohydrates', 'Protein', 'Fiber'],
+      benefits: ['Staple food', 'High market demand', 'Storage friendly'],
+      plantingTip: 'Plant in rows, requires cool weather'
     },
     {
-      id: 'cabbage',
-      name: 'Cabbage',
-      emoji: '🥬',
-      color: 'from-green-300 to-green-500',
-      image: 'https://images.unsplash.com/photo-1594282054458-5f3a55b05e3a?w=400',
-      season: 'Cool Season',
-      difficulty: 'Medium',
-      growthDays: 70,
-      yieldPerHectare: '30-50 tons',
-      nutritionFacts: ['Vitamin K', 'Vitamin C', 'Folate'],
-      benefits: ['Quick growing', 'High value', 'Market demand'],
-      plantingTip: 'Prefers cool weather and rich soil'
+      id: 'cotton',
+      name: 'Cotton',
+      emoji: '☁️',
+      color: 'from-gray-100 to-blue-200',
+      image: 'https://images.unsplash.com/photo-1605335645041-e945c8535492?w=400',
+      season: 'Summer/Kharif',
+      difficulty: 'High',
+      growthDays: 150,
+      yieldPerHectare: '2-3 tons',
+      nutritionFacts: ['N/A (Fiber crop)', 'Oil from seeds'],
+      benefits: ['High cash value', 'Industrial demand', 'Oil byproduct'],
+      plantingTip: 'Deep black soil is best, avoid waterlogging'
     },
     {
       id: 'onions',
@@ -139,7 +139,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
   // Handle crop selection
   const toggleCropSelection = (crop) => {
     const isSelected = selectedCrops.some(c => c.id === crop.id)
-    
+
     if (isSelected) {
       setSelectedCrops(prev => prev.filter(c => c.id !== crop.id))
     } else {
@@ -150,7 +150,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
         area: Math.round(onboardingData.farmBoundary?.area / 4 * 100) / 100 || 1 // Default to 1/4 of farm area
       }
       setSelectedCrops(prev => [...prev, newCrop])
-      
+
       // Show celebration for first selection
       if (selectedCrops.length === 0) {
         triggerCelebration()
@@ -160,8 +160,8 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
 
   // Update crop details
   const updateCropDetails = (cropId, updates) => {
-    setSelectedCrops(prev => 
-      prev.map(crop => 
+    setSelectedCrops(prev =>
+      prev.map(crop =>
         crop.id === cropId ? { ...crop, ...updates } : crop
       )
     )
@@ -234,7 +234,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
     <div className="min-h-screen p-4">
       {/* Confetti */}
       {showCelebration && <Confetti />}
-      
+
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -250,7 +250,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
           >
             <SparklesIcon className="w-10 h-10 text-white" />
           </motion.div>
-          
+
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
             Choose Your Crops 🌱
           </h1>
@@ -288,15 +288,15 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {cropDatabase.map((crop, index) => {
                   const isSelected = selectedCrops.some(c => c.id === crop.id)
-                  
+
                   return (
                     <motion.div
                       key={crop.id}
                       initial={{ opacity: 0, y: 30, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: 0.4 + index * 0.1 }}
-                      whileHover={{ 
-                        scale: 1.05, 
+                      whileHover={{
+                        scale: 1.05,
                         y: -10,
                         transition: { type: 'spring', stiffness: 300 }
                       }}
@@ -304,8 +304,8 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                       onClick={() => toggleCropSelection(crop)}
                       className={`
                         relative cursor-pointer rounded-3xl overflow-hidden shadow-xl transition-all duration-300 group
-                        ${isSelected 
-                          ? 'ring-4 ring-primary-400 ring-opacity-60 shadow-2xl' 
+                        ${isSelected
+                          ? 'ring-4 ring-primary-400 ring-opacity-60 shadow-2xl'
                           : 'hover:shadow-2xl'
                         }
                       `}
@@ -317,23 +317,23 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                           animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
                           transition={{ duration: 2, repeat: Infinity }}
                         />
-                        
+
                         {/* Crop Emoji */}
                         <motion.div
                           className="absolute top-4 left-4 text-6xl"
-                          animate={{ 
+                          animate={{
                             rotate: [0, 10, -10, 0],
                             scale: isSelected ? [1, 1.1, 1] : 1
                           }}
-                          transition={{ 
-                            duration: 3 + index * 0.2, 
+                          transition={{
+                            duration: 3 + index * 0.2,
                             repeat: Infinity,
                             ease: "easeInOut"
                           }}
                         >
                           {crop.emoji}
                         </motion.div>
-                        
+
                         {/* Selection indicator */}
                         {isSelected && (
                           <motion.div
@@ -344,35 +344,35 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                             <CheckIcon className="w-5 h-5 text-primary-600" />
                           </motion.div>
                         )}
-                        
+
                         {/* Difficulty badge */}
                         <div className={`absolute bottom-4 right-4 px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(crop.difficulty)}`}>
                           {crop.difficulty}
                         </div>
                       </div>
-                      
+
                       {/* Content */}
                       <div className="bg-white p-4">
                         <h3 className="font-bold text-lg text-gray-800 mb-2 group-hover:text-primary-600 transition-colors">
                           {crop.name}
                         </h3>
-                        
+
                         <div className="space-y-2 text-sm text-gray-600">
                           <div className="flex items-center space-x-2">
                             <CalendarIcon className="w-4 h-4" />
                             <span>{crop.growthDays} days</span>
                           </div>
-                          
+
                           <div className="flex items-center space-x-2">
                             <SunIcon className="w-4 h-4" />
                             <span>{crop.season}</span>
                           </div>
-                          
+
                           <div className="text-xs bg-gray-50 p-2 rounded-lg">
                             💡 {crop.plantingTip}
                           </div>
                         </div>
-                        
+
                         {/* Selection glow effect */}
                         {isSelected && (
                           <motion.div
@@ -386,7 +386,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                   )
                 })}
               </div>
-              
+
               {/* Continue Button */}
               {selectedCrops.length > 0 && (
                 <motion.div
@@ -430,7 +430,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                   When do you plan to plant each crop?
                 </p>
               </div>
-              
+
               <div className="grid md:grid-cols-2 gap-6">
                 {selectedCrops.map((crop, index) => (
                   <motion.div
@@ -449,7 +449,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                         <p className="text-sm text-gray-600">{crop.growthDays} days to harvest</p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -462,7 +462,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Area (hectares)
@@ -480,7 +480,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                   </motion.div>
                 ))}
               </div>
-              
+
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => setCurrentStep('selection')}
@@ -517,7 +517,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                   What stage are your crops currently in?
                 </p>
               </div>
-              
+
               <div className="space-y-6">
                 {selectedCrops.map((crop, index) => (
                   <motion.div
@@ -536,7 +536,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                         <p className="text-gray-600">Planted: {new Date(crop.plantingDate).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                       {growthStages.map((stage) => (
                         <motion.button
@@ -561,7 +561,7 @@ const CropSelection = ({ onNext, onBack, onboardingData, updateData, isAddFarm =
                   </motion.div>
                 ))}
               </div>
-              
+
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => setCurrentStep('planting')}

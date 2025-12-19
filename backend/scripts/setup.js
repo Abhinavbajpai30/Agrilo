@@ -107,35 +107,35 @@ async function createSampleData() {
     // Create sample user
     const sampleUser = new User({
       personalInfo: {
-        firstName: 'John',
-        lastName: 'Farmer',
-        phoneNumber: '+1234567890',
-        email: 'john.farmer@example.com'
+        firstName: 'Rajesh',
+        lastName: 'Patel',
+        phoneNumber: '+919876543210',
+        email: 'rajesh.patel@example.com'
       },
       authentication: {
         password: 'password123' // Will be hashed automatically
       },
       location: {
-        address: '123 Farm Road, Rural County, Kenya',
+        address: 'Village Palampur, District Raisen, Madhya Pradesh, India',
         coordinates: {
-          latitude: -1.2921,
-          longitude: 36.8219
+          latitude: 23.3315,
+          longitude: 77.8015
         },
-        country: 'Kenya',
-        region: 'Nairobi',
-        timezone: 'Africa/Nairobi'
+        country: 'India',
+        region: 'Madhya Pradesh',
+        timezone: 'Asia/Kolkata'
       },
       farmingProfile: {
         experienceLevel: 'intermediate',
         farmingType: 'mixed_farming',
-        primaryCrops: ['maize', 'beans', 'tomatoes'],
+        primaryCrops: ['wheat', 'soybean', 'cotton'],
         totalFarmArea: {
-          value: 2.5,
-          unit: 'hectares'
+          value: 4.5,
+          unit: 'acres'
         }
       },
       preferences: {
-        language: 'en',
+        language: 'hi',
         units: {
           temperature: 'celsius',
           measurement: 'metric'
@@ -150,46 +150,46 @@ async function createSampleData() {
     const sampleFarm = new Farm({
       owner: sampleUser._id,
       farmInfo: {
-        name: 'Green Valley Farm',
+        name: 'Om Shanti Farm',
         farmType: 'mixed_farm',
         totalArea: {
-          value: 2.5,
-          unit: 'hectares'
+          value: 4.5,
+          unit: 'acres'
         }
       },
       location: {
-        address: '123 Farm Road, Rural County, Kenya',
+        address: 'Village Palampur, District Raisen, Madhya Pradesh, India',
         centerPoint: {
           type: 'Point',
-          coordinates: [36.8219, -1.2921] // [longitude, latitude]
+          coordinates: [77.8015, 23.3315] // [longitude, latitude]
         },
         boundary: {
           type: 'Polygon',
           coordinates: [[
-            [36.8200, -1.2900],
-            [36.8240, -1.2900],
-            [36.8240, -1.2940],
-            [36.8200, -1.2940],
-            [36.8200, -1.2900]
+            [77.8000, 23.3300],
+            [77.8040, 23.3300],
+            [77.8040, 23.3340],
+            [77.8000, 23.3340],
+            [77.8000, 23.3300]
           ]]
         },
-        timezone: 'Africa/Nairobi'
+        timezone: 'Asia/Kolkata'
       },
       fields: [
         {
           fieldId: 'field_001',
           name: 'North Field',
-          area: { value: 1.0, unit: 'hectares' },
-          soilType: 'loam',
-          currentCrop: 'maize',
+          area: { value: 2.0, unit: 'acres' },
+          soilType: 'black_cotton',
+          currentCrop: 'wheat',
           status: 'active'
         },
         {
           fieldId: 'field_002',
           name: 'South Field',
-          area: { value: 1.5, unit: 'hectares' },
-          soilType: 'clay_loam',
-          currentCrop: 'beans',
+          area: { value: 2.5, unit: 'acres' },
+          soilType: 'black_cotton',
+          currentCrop: 'soybean',
           status: 'active'
         }
       ],
@@ -247,8 +247,8 @@ async function setup() {
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('\n🧪 Sample data created:');
-      console.log('   Email: john.farmer@example.com');
-      console.log('   Phone: +1234567890');
+      console.log('   Email: rajesh.patel@example.com');
+      console.log('   Phone: +919876543210');
       console.log('   Password: password123');
     }
 

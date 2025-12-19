@@ -31,34 +31,6 @@ const SUPPORTED_LANGUAGES = {
     nativeName: 'हिन्दी',
     flag: '🇮🇳',
     direction: 'ltr'
-  },
-  sw: {
-    code: 'sw',
-    name: 'Swahili',
-    nativeName: 'Kiswahili',
-    flag: '🇰🇪',
-    direction: 'ltr'
-  },
-  am: {
-    code: 'am',
-    name: 'Amharic',
-    nativeName: 'አማርኛ',
-    flag: '🇪🇹',
-    direction: 'ltr'
-  },
-  yo: {
-    code: 'yo',
-    name: 'Yoruba',
-    nativeName: 'Yorùbá',
-    flag: '🇳🇬',
-    direction: 'ltr'
-  },
-  ha: {
-    code: 'ha',
-    name: 'Hausa',
-    nativeName: 'Hausa',
-    flag: '🇳🇬',
-    direction: 'ltr'
   }
 }
 
@@ -190,27 +162,7 @@ const TRANSLATIONS = {
     translationMissing: 'Traduction manquante'
   },
 
-  // Swahili translations (subset)
-  sw: {
-    loading: 'Inapakia...',
-    error: 'Hitilafu',
-    success: 'Mafanikio',
-    cancel: 'Ghairi',
-    confirm: 'Thibitisha',
-    save: 'Hifadhi',
-    home: 'Nyumbani',
-    dashboard: 'Dashibodi',
-    farm: 'Shamba',
-    diagnosis: 'Uchunguzi',
-    irrigation: 'Umwagiliaji',
-    planning: 'Mipango',
-    login: 'Ingia',
-    register: 'Jiandikishe',
-    appName: 'Agrilo',
-    tagline: 'Msaidizi wa kilimo wa AI',
-    welcome: 'Karibu',
-    translationMissing: 'Tafsiri haijatolewa'
-  }
+  // Swahili translations removed
 }
 
 export const LanguageProvider = ({ children }) => {

@@ -467,8 +467,22 @@ class FloodApiService {
       ],
       soybeans: [
         'Avoid planting in low-lying areas',
-        'Improve drainage systems',
         'Consider early-maturing varieties'
+      ],
+      wheat: [
+        'Ensure good surface drainage',
+        'Avoid water stagnation > 24 hours',
+        'Apply N fertilizer after water recedes'
+      ],
+      cotton: [
+        'Drain excess water immediately',
+        'Monitor for root rot',
+        'Foliar nutrition spray after stress'
+      ],
+      sugarcane: [
+        'Can tolerate some waterlogging',
+        'Maintain drainage channels',
+        'Propping to prevent lodging'
       ]
     };
 

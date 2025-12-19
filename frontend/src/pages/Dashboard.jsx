@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  SunIcon, 
-  CloudIcon, 
+import {
+  SunIcon,
+  CloudIcon,
   BeakerIcon,
   CalendarDaysIcon,
   ClockIcon,
@@ -14,9 +14,8 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api'
 import WeatherWidget from '../components/Dashboard/WeatherWidget'
-import UrgentTaskCard from '../components/Dashboard/UrgentTaskCard'
+import RiskAnalysisWidget from '../components/Dashboard/RiskAnalysisWidget'
 import ToolNavigationCard from '../components/Dashboard/ToolNavigationCard'
-import ProgressIndicator from '../components/Dashboard/ProgressIndicator'
 import AnimatedMascot from '../components/Dashboard/AnimatedMascot'
 import FloatingParticles from '../components/Dashboard/FloatingParticles'
 
@@ -25,15 +24,15 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [particles, setParticles] = useState([])
-  
+
+
   // Animation refs
   const heroRef = useRef(null)
-  const tasksRef = useRef(null)
+
 
   useEffect(() => {
     fetchDashboardData()
-    
+
     // Update time every minute
     const timeInterval = setInterval(() => {
       setCurrentTime(new Date())
@@ -56,18 +55,18 @@ const Dashboard = () => {
     try {
       console.log('Fetching dashboard data...', { forceRefresh })
       setIsLoading(true)
-      
+
       // Add cache-busting parameter if force refresh is requested
       const url = forceRefresh ? '/dashboard/overview?t=' + Date.now() : '/dashboard/overview'
       const response = await apiService.get(url)
       console.log('Dashboard response:', response)
-      
+
       if (response.data?.status === 'success') {
         // The actual data is in response.data.data, not response.data.message
         const newData = response.data.data || response.data
-        console.log('Dashboard data set:', newData)
+        console.log('Dashboard data set JSON:', JSON.stringify(newData))
         setDashboardData(newData)
-        
+
         // Log the hasActiveFarm status for debugging
         console.log('hasActiveFarm status:', newData?.hasActiveFarm)
       }
@@ -89,7 +88,7 @@ const Dashboard = () => {
 
   const getWeatherGradient = () => {
     if (!dashboardData?.weather?.current) return 'from-blue-400 via-cyan-400 to-green-400'
-    
+
     const temp = dashboardData.weather.current.temperature
     if (temp > 30) return 'from-red-400 via-orange-400 to-yellow-400'
     if (temp > 20) return 'from-green-400 via-blue-400 to-cyan-400'
@@ -163,7 +162,7 @@ const Dashboard = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Complete Your Farm Setup</h2>
           <p className="text-gray-600 mb-6">Set up your farm to unlock the full dashboard experience</p>
-          
+
           {/* Debug Info */}
           <div className="bg-gray-100 rounded-lg p-4 text-sm mb-4">
             <h3 className="font-bold mb-2">Debug Information:</h3>
@@ -172,7 +171,7 @@ const Dashboard = () => {
             <p><strong>User:</strong> {user ? user.personalInfo?.firstName || 'Unknown' : 'Not logged in'}</p>
             <p><strong>User ID:</strong> {user?._id || 'None'}</p>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -217,14 +216,14 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 relative overflow-hidden">
       {/* Floating Particles */}
       <FloatingParticles weatherType={dashboardData?.weather?.animations?.primary || 'sunny'} />
-      
+
       {/* Animated Mascot */}
-      <AnimatedMascot 
-        position="bottom-right" 
+      <AnimatedMascot
+        position="bottom-right"
         mood="happy"
         message="Great job on your farming journey! 🌱"
       />
-      
+
       {/* Invisible overlay to prevent navigation interference */}
       <div className="fixed bottom-0 left-0 w-full h-24 pointer-events-none z-[9998]"></div>
 
@@ -262,16 +261,16 @@ const Dashboard = () => {
                     {dashboardData?.farm?.name || 'Your Farm'} • {dashboardData?.weather?.location?.name || 'Coordinates'} • {currentTime.toLocaleDateString()}
                   </p>
                 </div>
-                
+
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: [0, 5, -5, 0],
-                    scale: [1, 1.05, 1] 
+                    scale: [1, 1.05, 1]
                   }}
-                  transition={{ 
-                    duration: 4, 
+                  transition={{
+                    duration: 4,
                     repeat: Infinity,
-                    ease: "easeInOut" 
+                    ease: "easeInOut"
                   }}
                   className="hidden md:block"
                 >
@@ -306,45 +305,16 @@ const Dashboard = () => {
         {/* Main Content */}
         <section className="px-6 py-8">
           <div className="max-w-7xl mx-auto space-y-8">
-            
-            {/* Today's Urgent Task */}
-            <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-            >
-              <UrgentTaskCard 
-                task={dashboardData?.tasks?.urgent?.[0]}
-                onComplete={() => fetchDashboardData(true)}
-              />
-            </motion.div>
 
-            {/* Progress Overview */}
+
+
+            {/* AI Risk Analysis (GEE) */}
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              transition={{ delay: 0.75, duration: 0.6 }}
             >
-              <ProgressIndicator
-                title="Farm Health"
-                value={dashboardData?.progress?.farmHealth || 85}
-                icon="🌱"
-                color="green"
-              />
-              <ProgressIndicator
-                title="Sustainability Score"
-                value={dashboardData?.progress?.sustainabilityScore || 78}
-                icon="🌍"
-                color="blue"
-              />
-              <ProgressIndicator
-                title="Weekly Goals"
-                value={dashboardData?.progress?.weeklyGoals?.percentage || 60}
-                icon="🎯"
-                color="purple"
-                subtitle={`${dashboardData?.progress?.weeklyGoals?.completed || 3}/${dashboardData?.progress?.weeklyGoals?.total || 5} completed`}
-              />
+              <RiskAnalysisWidget location={dashboardData?.farm?.location} />
             </motion.div>
 
             {/* Core Tools Navigation */}
@@ -387,7 +357,7 @@ const Dashboard = () => {
                   <span className="text-2xl">🌱</span>
                   <span>Crop Growth Progress</span>
                 </h3>
-                
+
                 <div className="space-y-4">
                   {dashboardData.progress.cropGrowth.map((crop, index) => (
                     <motion.div

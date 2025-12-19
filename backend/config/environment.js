@@ -220,7 +220,7 @@ class EnvironmentConfig {
         debug: this.parseBoolean(process.env.DEBUG, this.isDevelopment()),
         timezone: process.env.TZ || 'UTC',
         locale: process.env.DEFAULT_LOCALE || 'en',
-        supportedLocales: this.parseArray(process.env.SUPPORTED_LOCALES, ['en', 'hi', 'es'])
+        supportedLocales: this.parseArray(process.env.SUPPORTED_LOCALES, ['en', 'hi', 'fr', 'es'])
       }
     }
 
@@ -352,7 +352,7 @@ class EnvironmentConfig {
 
     if (missing.length > 0) {
       console.error('Missing required environment variables:', missing.join(', '))
-      
+
       if (this.isProduction()) {
         process.exit(1)
       } else {
@@ -368,7 +368,7 @@ class EnvironmentConfig {
 
   getRequiredVariables() {
     const baseRequired = ['JWT_SECRET']
-    
+
     switch (this.env) {
       case 'production':
         return [
@@ -389,11 +389,11 @@ class EnvironmentConfig {
 
   validateDatabaseConfig() {
     const { mongodb } = this.config.database
-    
+
     if (!mongodb.uri) {
       throw new Error('Database URI is required')
     }
-    
+
     try {
       new URL(mongodb.uri)
     } catch (error) {
@@ -403,7 +403,7 @@ class EnvironmentConfig {
 
   validateAuthConfig() {
     const { jwt } = this.config.auth
-    
+
     if (!jwt.secret || jwt.secret.length < 32) {
       if (this.isProduction()) {
         throw new Error('JWT secret must be at least 32 characters in production')
@@ -413,7 +413,7 @@ class EnvironmentConfig {
 
   validateStorageConfig() {
     const { storage } = this.config
-    
+
     if (storage.provider === 'local') {
       const uploadPath = storage.local.uploadPath
       if (!fs.existsSync(uploadPath)) {
@@ -460,7 +460,7 @@ class EnvironmentConfig {
     if (origins) {
       return this.parseArray(origins)
     }
-    
+
     // Default origins based on environment
     switch (this.env) {
       case 'development':

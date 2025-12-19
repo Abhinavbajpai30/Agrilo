@@ -136,7 +136,12 @@ router.get('/overview', authenticateUser, asyncHandler(async (req, res) => {
       farm: {
         id: primaryFarm._id,
         name: primaryFarm.farmInfo.name,
-        location: primaryFarm.location.address,
+        location: {
+          address: primaryFarm.location.address,
+          coordinates: [lon, lat],
+          lat: lat,
+          lon: lon
+        },
         area: primaryFarm.farmInfo.totalArea
       },
       weather: weatherData ? {
