@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  DropletIcon, 
-  SunIcon, 
+import {
+  DropletIcon,
+  SunIcon,
   CloudRainIcon,
   CloudIcon,
   ThermometerIcon,
@@ -39,12 +39,12 @@ const IrrigationPlanning = () => {
   useEffect(() => {
     const fetchFarms = async () => {
       if (!user) return; // Don't fetch if user is not authenticated
-      
+
       setFarmsLoading(true);
       try {
         const response = await farmApi.getFarms();
         console.log('Irrigation farms API response:', response.data);
-        
+
         if (response.data && response.data.status === 'success' && response.data.data && response.data.data.farms) {
           // Transform farm data to match the expected format
           const transformedFarms = response.data.data.farms.map(farm => ({
@@ -60,7 +60,7 @@ const IrrigationPlanning = () => {
             lastIrrigation: '2 days ago' // This would come from irrigation logs
           }));
           setFarms(transformedFarms);
-          
+
           // Auto-select the first farm if available
           if (transformedFarms.length > 0 && !selectedFarm) {
             setSelectedFarm(transformedFarms[0]);
@@ -94,14 +94,14 @@ const IrrigationPlanning = () => {
 
   const fetchIrrigationData = async () => {
     if (!selectedFarm) return;
-    
+
     setIsLoading(true);
-    
+
     // Initialize with empty data
     let recommendationData = null;
     let weatherData = null;
     let historyData = [];
-    
+
     try {
       // Fetch irrigation recommendation
       const recommendationResponse = await apiService.post('/irrigation/recommendation', {
@@ -114,7 +114,7 @@ const IrrigationPlanning = () => {
 
       recommendationData = recommendationResponse.data.message || recommendationResponse.data.data || recommendationResponse.data;
       weatherData = recommendationData?.weather || {};
-      
+
     } catch (error) {
       console.error('Error fetching irrigation recommendation:', error);
       // Keep recommendationData as null - will show error card
@@ -125,7 +125,7 @@ const IrrigationPlanning = () => {
       const historyResponse = await apiService.get('/irrigation/history', {
         params: { farmId: selectedFarm.id, limit: 10 }
       });
-      
+
       historyData = (historyResponse.data.data || historyResponse.data)?.logs || [];
     } catch (error) {
       console.error('Error fetching irrigation history:', error);
@@ -136,7 +136,7 @@ const IrrigationPlanning = () => {
     setRecommendation(recommendationData);
     setWeatherForecast(weatherData);
     setIrrigationHistory(historyData);
-    
+
     setIsLoading(false);
   };
 
@@ -232,7 +232,7 @@ const IrrigationPlanning = () => {
           className="text-center mb-12"
         >
           <div className="flex items-center justify-center space-x-3 mb-4">
-      <motion.div
+            <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center"
@@ -259,7 +259,7 @@ const IrrigationPlanning = () => {
               <p className="text-gray-600 mb-4">
                 You don't have any farms set up yet. Create a farm first to get irrigation recommendations.
               </p>
-              <button 
+              <button
                 onClick={() => window.location.href = '/farm'}
                 className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
               >
@@ -269,50 +269,50 @@ const IrrigationPlanning = () => {
           ) : (
             // Farm cards
             farms.map((farm, index) => (
-            <motion.div
-              key={farm.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setSelectedFarm(farm);
-                setCurrentStep('analysis');
-              }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-white/40 cursor-pointer hover:shadow-2xl transition-all duration-300"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">{farm.name}</h3>
-                <MapPinIcon className="w-6 h-6 text-blue-500" />
-          </div>
-          
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Size:</span>
-                  <span className="font-semibold text-gray-800">{Number(farm.size).toFixed(2)} hectares</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Crop:</span>
-                  <span className="font-semibold text-green-600">{farm.crop}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Last Irrigation:</span>
-                  <span className="font-semibold text-gray-800">{farm.lastIrrigation}</span>
-                </div>
-          </div>
-          
               <motion.div
-                className="mt-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 rounded-xl font-semibold"
-                whileHover={{ from: 'from-cyan-500', to: 'to-blue-500' }}
+                key={farm.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.02, y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setSelectedFarm(farm);
+                  setCurrentStep('analysis');
+                }}
+                className="bg-white rounded-3xl p-8 shadow-xl border border-white/40 cursor-pointer hover:shadow-2xl transition-all duration-300"
               >
-                Check Irrigation Status
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800">{farm.name}</h3>
+                  <MapPinIcon className="w-6 h-6 text-blue-500" />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Size:</span>
+                    <span className="font-semibold text-gray-800">{Number(farm.size).toFixed(2)} hectares</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Crop:</span>
+                    <span className="font-semibold text-green-600">{farm.crop}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Last Irrigation:</span>
+                    <span className="font-semibold text-gray-800">{farm.lastIrrigation}</span>
+                  </div>
+                </div>
+
+                <motion.div
+                  className="mt-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 rounded-xl font-semibold"
+                  whileHover={{ from: 'from-cyan-500', to: 'to-blue-500' }}
+                >
+                  Check Irrigation Status
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ))
+            ))
           )}
         </div>
-          </div>
+      </div>
     </motion.div>
   );
 
@@ -322,11 +322,11 @@ const IrrigationPlanning = () => {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 p-6"
     >
-      <WaterDropAnimation 
-        isActive={showWaterDrops} 
-        intensity={recommendation?.recommendation?.status === 'urgent' ? 'heavy' : 'medium'} 
+      <WaterDropAnimation
+        isActive={showWaterDrops}
+        intensity={recommendation?.recommendation?.status === 'urgent' ? 'heavy' : 'medium'}
       />
-      
+
       <div className="max-w-6xl mx-auto py-4">
         {/* Header */}
         <motion.div
@@ -376,12 +376,11 @@ const IrrigationPlanning = () => {
                 </div>
                 <div className="mt-4 flex items-center space-x-4">
                   <span className="text-sm text-white/80">Data Reliability:</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    getDataReliabilityColor(recommendation?.metadata?.dataReliability || 'unknown')
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDataReliabilityColor(recommendation?.metadata?.dataReliability || 'unknown')
+                    }`}>
                     {recommendation?.metadata?.dataReliability === 'high' ? 'High' :
-                     recommendation?.metadata?.dataReliability === 'limited' ? 'Limited' :
-                     recommendation?.metadata?.dataReliability === 'low' ? 'Low' : 'Unknown'}
+                      recommendation?.metadata?.dataReliability === 'limited' ? 'Limited' :
+                        recommendation?.metadata?.dataReliability === 'low' ? 'Low' : 'Unknown'}
                   </span>
                 </div>
               </motion.div>
@@ -402,10 +401,10 @@ const IrrigationPlanning = () => {
                       <div>
                         <h2 className="text-2xl font-bold">
                           {recommendation?.recommendation?.status === 'needed' ? 'Irrigation Needed' :
-                           recommendation?.recommendation?.status === 'urgent' ? 'Urgent Irrigation' :
-                           recommendation?.recommendation?.status === 'skip' ? 'Skip Irrigation' :
-                           recommendation?.recommendation?.status === 'optimal' ? 'Optimal Moisture' :
-                           'Monitor Status'}
+                            recommendation?.recommendation?.status === 'urgent' ? 'Urgent Irrigation' :
+                              recommendation?.recommendation?.status === 'skip' ? 'Skip Irrigation' :
+                                recommendation?.recommendation?.status === 'optimal' ? 'Optimal Moisture' :
+                                  'Monitor Status'}
                         </h2>
                         <p className="text-white/80">Priority: {recommendation?.recommendation?.priority}</p>
                         {/* Data Source Indicators */}
@@ -416,7 +415,7 @@ const IrrigationPlanning = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     {recommendation?.recommendation?.amount > 0 && (
                       <motion.div
                         animate={{ scale: [1, 1.1, 1] }}
@@ -433,104 +432,103 @@ const IrrigationPlanning = () => {
                     {recommendation?.recommendation?.reason}
                   </p>
 
-                {recommendation?.recommendation?.optimalTimes?.recommended && (
-                  <div className="bg-white/20 rounded-2xl p-4 mb-4">
-                    <h3 className="font-semibold mb-3 flex items-center space-x-2">
-                      <ClockIcon className="w-5 h-5" />
-                      <span>Optimal Irrigation Times</span>
-                    </h3>
-                    <div className="space-y-2">
-                      {recommendation.recommendation.optimalTimes.recommended.map((time, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <span>{time.time}</span>
-                          <span className="text-sm bg-white/20 px-2 py-1 rounded">{time.efficiency}% efficiency</span>
-                      </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {recommendation?.recommendation?.optimalTimes?.avoid && (
-                  <div className="bg-red-500/20 rounded-2xl p-4 mb-4">
-                    <h3 className="font-semibold mb-3 flex items-center space-x-2 text-red-100">
-                      <XCircleIcon className="w-5 h-5" />
-                      <span>Avoid These Times</span>
-                    </h3>
-                    <div className="space-y-2">
-                      {recommendation.recommendation.optimalTimes.avoid.map((time, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <span className="text-red-100">{time.time}</span>
-                          <span className="text-sm bg-red-500/30 px-2 py-1 rounded text-red-100">{time.efficiency}% efficiency</span>
-                      </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {recommendation?.recommendation?.conservationTips && (
-                  <div className="bg-green-500/20 rounded-2xl p-4 mb-4">
-                    <h3 className="font-semibold mb-3 flex items-center space-x-2 text-green-100">
-                      <ZapIcon className="w-5 h-5" />
-                      <span>Water Conservation Tips</span>
-                    </h3>
-                    <div className="space-y-3">
-                      {recommendation.recommendation.conservationTips.map((tip, index) => (
-                        <div key={index} className="flex items-start space-x-3">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${
-                            tip.impact === 'high' ? 'bg-green-400' : 'bg-yellow-400'
-                          }`} />
-                          <div>
-                            <p className="text-green-100 font-medium">{tip.tip}</p>
-                            <p className="text-green-200 text-sm">Potential savings: {tip.savings}</p>
+                  {recommendation?.recommendation?.optimalTimes?.recommended && (
+                    <div className="bg-white/20 rounded-2xl p-4 mb-4">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                        <ClockIcon className="w-5 h-5" />
+                        <span>Optimal Irrigation Times</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {recommendation.recommendation.optimalTimes.recommended.map((time, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span>{time.time}</span>
+                            <span className="text-sm bg-white/20 px-2 py-1 rounded">{time.efficiency}% efficiency</span>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {recommendation?.recommendation?.optimalTimes?.avoid && (
+                    <div className="bg-red-500/20 rounded-2xl p-4 mb-4">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 text-red-100">
+                        <XCircleIcon className="w-5 h-5" />
+                        <span>Avoid These Times</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {recommendation.recommendation.optimalTimes.avoid.map((time, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-red-100">{time.time}</span>
+                            <span className="text-sm bg-red-500/30 px-2 py-1 rounded text-red-100">{time.efficiency}% efficiency</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {recommendation?.recommendation?.conservationTips && (
+                    <div className="bg-green-500/20 rounded-2xl p-4 mb-4">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 text-green-100">
+                        <ZapIcon className="w-5 h-5" />
+                        <span>Water Conservation Tips</span>
+                      </h3>
+                      <div className="space-y-3">
+                        {recommendation.recommendation.conservationTips.map((tip, index) => (
+                          <div key={index} className="flex items-start space-x-3">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${tip.impact === 'high' ? 'bg-green-400' : 'bg-yellow-400'
+                              }`} />
+                            <div>
+                              <p className="text-green-100 font-medium">{tip.tip}</p>
+                              <p className="text-green-200 text-sm">Potential savings: {tip.savings}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {recommendation?.recommendation?.environmentalImpact && (
+                    <div className="bg-blue-500/20 rounded-2xl p-4 mb-4">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 text-blue-100">
+                        <LeafIcon className="w-5 h-5" />
+                        <span>Environmental Impact</span>
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4 text-blue-100">
+                        <div>
+                          <p className="text-sm opacity-80">Sustainability</p>
+                          <p className="font-semibold capitalize">{recommendation.recommendation.environmentalImpact.sustainability}</p>
                         </div>
-                      ))}
+                        <div>
+                          <p className="text-sm opacity-80">Water Efficiency</p>
+                          <p className="font-semibold capitalize">{recommendation.recommendation.environmentalImpact.waterEfficiency}</p>
+                        </div>
+                      </div>
+                      <p className="text-blue-200 text-sm mt-3">{recommendation.recommendation.environmentalImpact.recommendation}</p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {recommendation?.recommendation?.environmentalImpact && (
-                  <div className="bg-blue-500/20 rounded-2xl p-4 mb-4">
-                    <h3 className="font-semibold mb-3 flex items-center space-x-2 text-blue-100">
-                      <LeafIcon className="w-5 h-5" />
-                      <span>Environmental Impact</span>
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 text-blue-100">
-                      <div>
-                        <p className="text-sm opacity-80">Sustainability</p>
-                        <p className="font-semibold capitalize">{recommendation.recommendation.environmentalImpact.sustainability}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm opacity-80">Water Efficiency</p>
-                        <p className="font-semibold capitalize">{recommendation.recommendation.environmentalImpact.waterEfficiency}</p>
-                      </div>
-                    </div>
-                    <p className="text-blue-200 text-sm mt-3">{recommendation.recommendation.environmentalImpact.recommendation}</p>
-                  </div>
-                )}
-
-                {recommendation?.recommendation?.costEstimate && (
-                  <div className="bg-yellow-500/20 rounded-2xl p-4">
-                    <h3 className="font-semibold mb-3 flex items-center space-x-2 text-yellow-100">
-                      <DollarSignIcon className="w-5 h-5" />
-                      <span>Cost Estimate</span>
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4 text-yellow-100">
-                      <div className="text-center">
-                        <p className="text-sm opacity-80">Water</p>
-                        <p className="font-semibold">${recommendation.recommendation.costEstimate.water}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm opacity-80">Energy</p>
-                        <p className="font-semibold">${recommendation.recommendation.costEstimate.energy}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm opacity-80">Total</p>
-                        <p className="font-semibold">${recommendation.recommendation.costEstimate.total}</p>
+                  {recommendation?.recommendation?.costEstimate && (
+                    <div className="bg-yellow-500/20 rounded-2xl p-4">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 text-yellow-100">
+                        <DollarSignIcon className="w-5 h-5" />
+                        <span>Cost Estimate</span>
+                      </h3>
+                      <div className="grid grid-cols-3 gap-4 text-yellow-100">
+                        <div className="text-center">
+                          <p className="text-sm opacity-80">Water</p>
+                          <p className="font-semibold">₹{recommendation.recommendation.costEstimate.water}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm opacity-80">Energy</p>
+                          <p className="font-semibold">₹{recommendation.recommendation.costEstimate.energy}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm opacity-80">Total</p>
+                          <p className="font-semibold">₹{recommendation.recommendation.costEstimate.total}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 </div>
               ) : (
                 /* Error Card for Recommendation */
@@ -543,7 +541,7 @@ const IrrigationPlanning = () => {
                     </div>
                   </div>
                   <p className="text-lg text-white/90 mb-6">
-                    Unable to provide irrigation recommendations due to insufficient real data for this location. 
+                    Unable to provide irrigation recommendations due to insufficient real data for this location.
                     Weather and soil data from OpenEPI is required for accurate calculations.
                   </p>
                   <div className="bg-white/20 rounded-2xl p-4">
@@ -595,14 +593,13 @@ const IrrigationPlanning = () => {
                           strokeWidth="8"
                           fill="none"
                           strokeLinecap="round"
-                          className={`${
-                            recommendation?.waterBalance?.moisturePercentage > 70 ? 'text-green-500' :
+                          className={`${recommendation?.waterBalance?.moisturePercentage > 70 ? 'text-green-500' :
                             recommendation?.waterBalance?.moisturePercentage > 40 ? 'text-yellow-500' :
-                            'text-red-500'
-                          }`}
+                              'text-red-500'
+                            }`}
                           initial={{ strokeDasharray: 0, strokeDashoffset: 0 }}
-                          animate={{ 
-                            strokeDasharray: 314, 
+                          animate={{
+                            strokeDasharray: 314,
                             strokeDashoffset: 314 - (314 * (recommendation?.waterBalance?.moisturePercentage || 0) / 100)
                           }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
@@ -612,7 +609,7 @@ const IrrigationPlanning = () => {
                         <div className="text-center">
                           <div className="text-2xl font-bold text-gray-800">
                             {recommendation?.waterBalance?.moisturePercentage || 0}%
-                        </div>
+                          </div>
                           <div className="text-sm text-gray-600">Moisture</div>
                         </div>
                       </div>
@@ -630,109 +627,108 @@ const IrrigationPlanning = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Status:</span>
-                      <span className={`font-semibold ${
-                        recommendation?.waterBalance?.isOptimal ? 'text-green-600' :
+                      <span className={`font-semibold ${recommendation?.waterBalance?.isOptimal ? 'text-green-600' :
                         recommendation?.waterBalance?.isCritical ? 'text-red-600' :
-                        'text-yellow-600'
-                      }`}>
+                          'text-yellow-600'
+                        }`}>
                         {recommendation?.waterBalance?.isOptimal ? 'Optimal' :
-                         recommendation?.waterBalance?.isCritical ? 'Critical' :
-                         'Adequate'}
+                          recommendation?.waterBalance?.isCritical ? 'Critical' :
+                            'Adequate'}
                       </span>
                     </div>
                   </div>
-              </div>
+                </div>
 
-              {/* Evapotranspiration Data */}
-              {recommendation?.evapotranspiration && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300"
-                >
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center space-x-2">
-                    <ThermometerIcon className="w-5 h-5 text-orange-500" />
-                    <span>Evapotranspiration Data</span>
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">ET₀ (Reference)</p>
-                      <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.et0} mm/day</p>
+                {/* Evapotranspiration Data */}
+                {recommendation?.evapotranspiration && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300"
+                  >
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center space-x-2">
+                      <ThermometerIcon className="w-5 h-5 text-orange-500" />
+                      <span>Evapotranspiration Data</span>
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">ET₀ (Reference)</p>
+                        <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.et0} mm/day</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">ET Crop</p>
+                        <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.etCrop} mm/day</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Crop Coefficient</p>
+                        <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.cropCoefficient}</p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">ET Crop</p>
-                      <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.etCrop} mm/day</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">Crop Coefficient</p>
-                      <p className="text-xl font-bold text-gray-800">{recommendation.evapotranspiration.cropCoefficient}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
 
-              {/* Soil Details */}
-              {recommendation?.soil ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
-                      <BeakerIcon className="w-5 h-5 text-brown-500" />
-                      <span>Soil Properties</span>
-                    </h3>
-                    {getDataSourceBadge(recommendation.soil.source)}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Soil Type</p>
-                      <p className="font-semibold text-gray-800 capitalize">{recommendation.soil.type || 'Unknown'}</p>
+                {/* Soil Details */}
+                {recommendation?.soil ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                        <BeakerIcon className="w-5 h-5 text-brown-500" />
+                        <span>Soil Properties</span>
+                      </h3>
+                      {getDataSourceBadge(recommendation.soil.source)}
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600">pH Level</p>
-                      <p className="font-semibold text-gray-800">{recommendation.soil.ph || 'N/A'}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Soil Type</p>
+                        <p className="font-semibold text-gray-800 capitalize">{recommendation.soil.type || 'Unknown'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">pH Level</p>
+                        <p className="font-semibold text-gray-800">{recommendation.soil.ph || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Organic Matter</p>
+                        <p className="font-semibold text-gray-800">{recommendation.soil.organicMatter || 'N/A'}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Drainage</p>
+                        <p className="font-semibold text-gray-800 capitalize">{recommendation.soil.drainage}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-600">Water Holding Capacity</p>
+                        <p className="font-semibold text-gray-800">{recommendation.soil.waterHoldingCapacity} mm/m</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Organic Matter</p>
-                      <p className="font-semibold text-gray-800">{recommendation.soil.organicMatter || 'N/A'}%</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                        <BeakerIcon className="w-5 h-5 text-brown-500" />
+                        <span>Soil Properties</span>
+                      </h3>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Unavailable
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Drainage</p>
-                      <p className="font-semibold text-gray-800 capitalize">{recommendation.soil.drainage}</p>
+                    <div className="text-center py-4 text-gray-500">
+                      <BeakerIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="font-medium">Soil data unavailable</p>
+                      <p className="text-sm mt-1">Soil composition data is required for accurate irrigation calculations</p>
                     </div>
-                    <div className="col-span-2">
-                      <p className="text-sm text-gray-600">Water Holding Capacity</p>
-                      <p className="font-semibold text-gray-800">{recommendation.soil.waterHoldingCapacity} mm/m</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
-                      <BeakerIcon className="w-5 h-5 text-brown-500" />
-                      <span>Soil Properties</span>
-                    </h3>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      Unavailable
-                    </span>
-                  </div>
-                  <div className="text-center py-4 text-gray-500">
-                    <BeakerIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="font-medium">Soil data unavailable</p>
-                    <p className="text-sm mt-1">Soil composition data is required for accurate irrigation calculations</p>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
               </motion.div>
             </motion.div>
 
@@ -793,6 +789,45 @@ const IrrigationPlanning = () => {
                 </div>
               )}
 
+
+              {/* Air Quality (New) */}
+              {recommendation?.airQuality && (
+                <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+                      <WindIcon className="w-6 h-6 text-teal-500" />
+                      <span>Air Quality</span>
+                    </h3>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${recommendation.airQuality.aqi < 50 ? 'bg-green-100 text-green-800' :
+                      recommendation.airQuality.aqi < 100 ? 'bg-yellow-100 text-yellow-800' :
+                        recommendation.airQuality.aqi < 150 ? 'bg-orange-100 text-orange-800' :
+                          'bg-red-100 text-red-800'
+                      }`}>
+                      AQI {recommendation.airQuality.aqi}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">PM2.5</span>
+                      <span className="font-semibold text-gray-800">{recommendation.airQuality.pm2_5} µg/m³</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">UV Index</span>
+                      <span className="font-semibold text-gray-800">{recommendation.airQuality.uvIndex}</span>
+                    </div>
+                    {recommendation.airQuality.pollen && (
+                      <div className="col-span-2 pt-2 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 mb-1">Pollen Levels</p>
+                        <div className="flex justify-between text-sm">
+                          <span>Birch: {recommendation.airQuality.pollen.birch || 0}</span>
+                          <span>Grass: {recommendation.airQuality.pollen.grass || 0}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
@@ -812,13 +847,13 @@ const IrrigationPlanning = () => {
                         transition={{ delay: 0.1 * index }}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
                       >
-                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3">
                           {getWeatherIcon(day.summary)}
                           <div>
                             <div className="font-semibold text-gray-800">
-                              {day.time ? new Date(day.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 
-                               day.date ? new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }) : 'N/A'}
-                          </div>
+                              {day.time ? new Date(day.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) :
+                                day.date ? new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }) : 'N/A'}
+                            </div>
                             <div className="text-sm text-gray-600">
                               {day.time ? new Date(day.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''} • {typeof day.temperature === 'object' ? day.temperature?.value || 'N/A' : day.temperature || 'N/A'}°C
                             </div>
@@ -839,7 +874,7 @@ const IrrigationPlanning = () => {
                             })()}
                           </div>
                           <div className="text-xs text-gray-500">Rain</div>
-                      </div>
+                        </div>
                       </motion.div>
                     ))
                   ) : (
@@ -849,13 +884,13 @@ const IrrigationPlanning = () => {
                       <p className="text-sm mt-1">Real-time forecast data is required</p>
                     </div>
                   )}
-                  </div>
+                </div>
               </div>
 
-            {/* Quick Actions */}
+              {/* Quick Actions */}
               <div className="bg-white rounded-3xl p-6 shadow-2xl border-2 border-gray-100 hover:shadow-3xl transition-shadow duration-300">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
+                <div className="space-y-3">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -883,8 +918,8 @@ const IrrigationPlanning = () => {
             </motion.div>
           </div>
         )}
-        </div>
-      </motion.div>
+      </div>
+    </motion.div>
   );
 
   return (

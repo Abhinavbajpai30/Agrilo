@@ -88,6 +88,88 @@ class OpenMeteoService {
     }
 
     /**
+     * Get Soil Data
+     * Fetches soil moisture and temperature at different depths
+     */
+    async getSoilData(lat, lon) {
+        const cacheKey = `soil:${lat}:${lon}`;
+        if (this.cache.has(cacheKey)) {
+            const { data, timestamp } = this.cache.get(cacheKey);
+            if (Date.now() - timestamp < this.cacheTTL) {
+                logger.info('Using cached Open-Meteo soil data', { lat, lon });
+                return data;
+            }
+        }
+
+        try {
+            logger.info('Fetching soil data from Open-Meteo', { lat, lon });
+            const response = await this.client.get('/forecast', {
+                params: {
+                    latitude: lat,
+                    longitude: lon,
+                    hourly: 'soil_temperature_0cm,soil_temperature_18cm,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm',
+                    timezone: 'auto',
+                    forecast_days: 1
+                }
+            });
+
+            this.cache.set(cacheKey, {
+                data: response.data,
+                timestamp: Date.now()
+            });
+
+            return response.data;
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Get Air Quality Data
+     * Fetches AQI, PM10, PM2.5, Pollen
+     */
+    async getAirQuality(lat, lon) {
+        const cacheKey = `air_quality:${lat}:${lon}`;
+        if (this.cache.has(cacheKey)) {
+            const { data, timestamp } = this.cache.get(cacheKey);
+            if (Date.now() - timestamp < this.cacheTTL) {
+                logger.info('Using cached Open-Meteo air quality data', { lat, lon });
+                return data;
+            }
+        }
+
+        try {
+            logger.info('Fetching air quality data from Open-Meteo', { lat, lon });
+            // Air Quality API has a different base URL
+            const response = await axios.get('https://air-quality-api.open-meteo.com/v1/air-quality', {
+                params: {
+                    latitude: lat,
+                    longitude: lon,
+                    current: 'european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone,aerosol_optical_depth,dust,uv_index',
+                    hourly: 'pm10,pm2_5,birch_pollen,grass_pollen,olive_pollen,ragweed_pollen',
+                    timezone: 'auto',
+                    forecast_days: 1
+                },
+                timeout: this.requestTimeout,
+                headers: {
+                    'User-Agent': 'Agrilo/1.0 (contact@agrilo.com)'
+                }
+            });
+
+            this.cache.set(cacheKey, {
+                data: response.data,
+                timestamp: Date.now()
+            });
+
+            return response.data;
+        } catch (error) {
+            // Don't throw for Air Quality, just return null or log error as it's secondary data
+            logger.error('Open-Meteo Air Quality API Error', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
      * Interpret WMO Weather Codes
      * Source: https://open-meteo.com/en/docs
      */
@@ -114,6 +196,7 @@ class OpenMeteoService {
             82: { description: 'Violent rain showers', icon: 'rain' },
             85: { description: 'Slight snow showers', icon: 'snow' },
             86: { description: 'Heavy snow showers', icon: 'snow' },
+            117: { description: 'Thunderstorm', icon: 'thunderstorm' },
             95: { description: 'Thunderstorm', icon: 'thunderstorm' },
             96: { description: 'Thunderstorm with slight hail', icon: 'thunderstorm' },
             99: { description: 'Thunderstorm with heavy hail', icon: 'thunderstorm' }

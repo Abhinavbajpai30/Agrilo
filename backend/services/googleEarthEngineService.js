@@ -28,12 +28,30 @@ class GoogleEarthEngineService {
         if (this.initialized) return;
 
         try {
-            if (!this.privateKey || !this.clientEmail) {
-                throw new Error('Missing Google Earth Engine credentials');
+            let privateKey = this.privateKey;
+            let clientEmail = this.clientEmail;
+
+            // Optional: Support reading from a JSON key file path defined in env
+            // This is often easier for users than pasting multiline keys into .env
+            if ((!privateKey || !clientEmail) && process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+                try {
+                    const fs = require('fs');
+                    const keyFileContent = fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON, 'utf8');
+                    const keyData = JSON.parse(keyFileContent);
+                    privateKey = keyData.private_key;
+                    clientEmail = keyData.client_email;
+                    logger.info('Loaded GEE credentials from JSON file');
+                } catch (fileError) {
+                    logger.warn('Failed to read GOOGLE_APPLICATION_CREDENTIALS_JSON', { error: fileError.message });
+                }
+            }
+
+            if (!privateKey || !clientEmail) {
+                throw new Error('Missing Google Earth Engine credentials (private key or client email)');
             }
 
             // Handle private key formatting (newlines) from env var
-            const formattedKey = this.privateKey.replace(/\\n/g, '\n');
+            const formattedKey = privateKey.replace(/\\n/g, '\n');
 
             logger.info('Initializing Google Earth Engine...');
 
@@ -42,7 +60,7 @@ class GoogleEarthEngineService {
                 ee.data.authenticateViaPrivateKey(
                     {
                         private_key: formattedKey,
-                        client_email: this.clientEmail
+                        client_email: clientEmail
                     },
                     () => resolve(),
                     (err) => reject(err)
@@ -308,13 +326,6 @@ class GoogleEarthEngineService {
                 });
 
             const results = await new Promise((resolve, reject) => {
-                // Use a client-side safe merge/access if possible, but for now we trust the wider window
-                // or we use setOutputs with nulls? 
-                // Let's rely on standard evaluate but catch the recursive error if needed in catch block
-
-                // Construct safe dictionary usage on server side if keys missing?
-                // Actually, if we just check contains...
-
                 const dict = ee.Dictionary({
                     recent: recentRain.get('precipitation'),
                     baseline: baseline.get('precipitation')

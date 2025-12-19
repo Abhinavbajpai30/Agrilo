@@ -1,27 +1,15 @@
 /**
  * Smart Irrigation Advisor Service for Agrilo
  * Calculates irrigation needs using evapotranspiration, weather data, and soil conditions
+ * Refactored to use Open-Meteo for all environmental data
  */
 
-const axios = require('axios');
 const logger = require('../utils/logger');
 const { ApiError } = require('../middleware/errorHandler');
+const openMeteoService = require('./openMeteoService');
 
 class IrrigationService {
   constructor() {
-    // OpenEPI API configuration
-    this.openEpiConfig = {
-      authURL: 'https://auth.openepi.io/realms/openepi/protocol/openid-connect/token',
-      baseURL: process.env.OPENEPI_API_URL || 'https://api.openepi.io',
-      clientId: process.env.OPENEPI_CLIENT_ID || '',
-      clientSecret: process.env.OPENEPI_CLIENT_SECRET || '',
-      timeout: 30000
-    };
-
-    // Token cache
-    this.accessToken = null;
-    this.tokenExpiry = null;
-
     // Crop coefficients for different growth stages
     this.cropCoefficients = {
       tomato: {
@@ -78,97 +66,20 @@ class IrrigationService {
       silt_loam: 240,
       unknown: 180
     };
-
-    // Cache for weather and soil data
-    this.weatherCache = new Map();
-    this.soilCache = new Map();
-    this.cacheTTL = 3600000; // 1 hour in milliseconds
   }
 
   /**
-   * Get OpenEPI access token using client credentials
-   */
-  async getOpenEpiToken() {
-    if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
-      return this.accessToken;
-    }
-
-    try {
-      const response = await axios.post(
-        this.openEpiConfig.authURL,
-        {
-          grant_type: 'client_credentials',
-          client_id: this.openEpiConfig.clientId,
-          client_secret: this.openEpiConfig.clientSecret,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          timeout: this.openEpiConfig.timeout
-        }
-      );
-
-      if (response.data && response.data.access_token) {
-        this.accessToken = response.data.access_token;
-        this.tokenExpiry = Date.now() + (50 * 60 * 1000);
-        return this.accessToken;
-      } else {
-        throw new Error('No access token received from OpenEPI');
-      }
-    } catch (error) {
-      logger.error('Failed to get OpenEPI token', { error: error.message });
-      throw error;
-    }
-  }
-
-  /**
-   * Get weather forecast data from OpenEPI
+   * Get weather forecast data from Open-Meteo and adapt format
    */
   async getWeatherForecast(latitude, longitude) {
-    const cacheKey = `weather_${latitude}_${longitude}`;
-    const cached = this.weatherCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
-      return cached.data;
-    }
-
     try {
-      // Try public OpenEPI API first (no auth required)
-      try {
-        const response = await axios.get(
-          'https://api.openepi.io/weather/locationforecast',
-          {
-            params: {
-              lat: latitude,
-              lon: longitude,
-              altitude: 0
-            },
-            headers: {
-              'User-Agent': 'Agrilo/1.0'
-            },
-            timeout: 10000
-          }
-        );
+      const weatherData = await openMeteoService.getWeatherData(latitude, longitude);
 
-        if (response.data && response.data.properties && response.data.properties.timeseries) {
-          const processedData = this.processWeatherData(response.data);
-          this.weatherCache.set(cacheKey, {
-            data: processedData,
-            timestamp: Date.now()
-          });
-          return processedData;
-        }
-      } catch (apiError) {
-        logger.error('OpenEPI Weather API failed - no fallback available', {
-          error: apiError.message,
-          status: apiError.response?.status
-        });
-        throw new ApiError(`Weather data unavailable: ${apiError.message}`, 503);
+      if (!weatherData || !weatherData.current) {
+        throw new ApiError('Weather data unavailable from Open-Meteo', 503);
       }
 
-      // If we reach here, real data is not available
-      throw new ApiError('Real weather data is not available for this location', 503);
+      return this.processWeatherData(weatherData);
 
     } catch (error) {
       logger.error('Failed to get weather forecast', { error: error.message });
@@ -177,86 +88,17 @@ class IrrigationService {
   }
 
   /**
-   * Get soil type data from OpenEPI
-   */
-  async getSoilType(latitude, longitude) {
-    try {
-      const response = await axios.get(
-        'https://api.openepi.io/soil/type',
-        {
-          params: {
-            lat: latitude,
-            lon: longitude
-          },
-          headers: {
-            'User-Agent': 'Agrilo/1.0'
-          },
-          timeout: 10000
-        }
-      );
-
-      if (response.data && response.data.properties && response.data.properties.most_probable_soil_type) {
-        return {
-          soilType: response.data.properties.most_probable_soil_type,
-          source: 'OpenEPI'
-        };
-      } else {
-        throw new Error('No soil type data available for this location');
-      }
-
-    } catch (error) {
-      logger.error('Failed to get soil type data', { error: error.message });
-      throw new ApiError(`Soil type data unavailable: ${error.message}`, 503);
-    }
-  }
-
-  /**
-   * Get soil data from OpenEPI
+   * Get soil data from Open-Meteo and adapt format
    */
   async getSoilData(latitude, longitude) {
-    const cacheKey = `soil_${latitude}_${longitude}`;
-    const cached = this.soilCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
-      return cached.data;
-    }
-
     try {
-      // Try public OpenEPI API (no auth required)
-      const params = new URLSearchParams();
-      params.append('lon', longitude);
-      params.append('lat', latitude);
-      params.append('depths', '0-30cm');
-      ['bdod', 'cec', 'cfvo', 'clay', 'nitrogen', 'ocd', 'ocs', 'phh2o', 'sand', 'silt', 'soc'].forEach(prop => {
-        params.append('properties', prop);
-      });
-      params.append('values', 'mean');
+      const soilData = await openMeteoService.getSoilData(latitude, longitude);
 
-      const response = await axios.get(
-        `https://api.openepi.io/soil/property?${params.toString()}`,
-        {
-          headers: {
-            'User-Agent': 'Agrilo/1.0'
-          },
-          timeout: 10000
-        }
-      );
-
-      if (response.data && response.data.properties && response.data.properties.layers) {
-        // Check if we actually have soil data
-        if (response.data.properties.layers.length === 0) {
-          throw new ApiError('No soil data available for this location', 404);
-        }
-
-        const processedData = this.processSoilData(response.data);
-        this.soilCache.set(cacheKey, {
-          data: processedData,
-          timestamp: Date.now()
-        });
-        return processedData;
-      } else {
-        throw new ApiError('No soil data available for this location', 404);
+      if (!soilData || !soilData.hourly) {
+        throw new ApiError('Soil data unavailable from Open-Meteo', 404);
       }
+
+      return this.processSoilData(soilData);
 
     } catch (error) {
       if (error instanceof ApiError) {
@@ -268,13 +110,39 @@ class IrrigationService {
   }
 
   /**
+   * Get Air Quality data (New Feature)
+   */
+  async getAirQuality(latitude, longitude) {
+    try {
+      const aqData = await openMeteoService.getAirQuality(latitude, longitude);
+      if (!aqData || !aqData.current) return null;
+
+      return {
+        aqi: aqData.current.european_aqi,
+        pm10: aqData.current.pm10,
+        pm2_5: aqData.current.pm2_5,
+        uvIndex: aqData.current.uv_index,
+        pollen: {
+          birch: aqData.hourly?.birch_pollen ? aqData.hourly.birch_pollen[0] : 0,
+          grass: aqData.hourly?.grass_pollen ? aqData.hourly.grass_pollen[0] : 0,
+          olive: aqData.hourly?.olive_pollen ? aqData.hourly.olive_pollen[0] : 0,
+          ragweed: aqData.hourly?.ragweed_pollen ? aqData.hourly.ragweed_pollen[0] : 0
+        },
+        source: 'Open-Meteo'
+      };
+    } catch (error) {
+      logger.warn('Failed to get air quality data', { error: error.message });
+      return null;
+    }
+  }
+
+  /**
    * Calculate evapotranspiration using Penman-Monteith equation (simplified)
    */
   calculateEvapotranspiration(weatherData, cropType, growthStage) {
     const { temperature, humidity, windSpeed, solarRadiation } = weatherData;
 
     // Simplified ET0 calculation (reference evapotranspiration)
-    // In production, you'd use the full Penman-Monteith equation
     const tempFactor = Math.max(0, (temperature - 5) / 30);
     const humidityFactor = Math.max(0.3, (100 - humidity) / 100);
     const windFactor = Math.min(2, 1 + windSpeed / 10);
@@ -313,6 +181,7 @@ class IrrigationService {
       evapotranspiration: null,
       weather: null,
       soil: null,
+      airQuality: null,
       metadata: {
         calculatedAt: new Date(),
         location: { latitude, longitude },
@@ -321,6 +190,7 @@ class IrrigationService {
         dataAvailability: {
           weather: false,
           soil: false,
+          airQuality: false,
           hasRealData: false
         }
       }
@@ -328,10 +198,9 @@ class IrrigationService {
 
     let weatherData = null;
     let soilData = null;
-    let soilTypeData = null;
+    let aqData = null;
     let weatherError = null;
     let soilError = null;
-    let soilTypeError = null;
 
     // Try to get weather data
     try {
@@ -353,14 +222,14 @@ class IrrigationService {
       result.metadata.soilError = soilError.message;
     }
 
-    // Try to get soil type data
+    // Try to get Air Quality data
     try {
-      soilTypeData = await this.getSoilType(latitude, longitude);
-      result.metadata.dataAvailability.soilType = true;
-      logger.info('Soil type data retrieved successfully', { source: 'real' });
-    } catch (soilTypeError) {
-      logger.error('Soil type API failed', { error: soilTypeError.message });
-      result.metadata.soilTypeError = soilTypeError.message;
+      aqData = await this.getAirQuality(latitude, longitude);
+      if (aqData) {
+        result.metadata.dataAvailability.airQuality = true;
+      }
+    } catch (error) {
+      // Optional data
     }
 
     // Update data availability
@@ -388,33 +257,11 @@ class IrrigationService {
         type: soilType || 'unknown',
         waterHoldingCapacity: this.soilWaterCapacity[soilType] || this.soilWaterCapacity.unknown,
         drainage: 'moderate',
+        currentMoisture: 50, // Assumption
         source: 'default'
       };
 
       result.metadata.warnings = ['Soil data unavailable - using default soil properties. Recommendations may be less accurate.'];
-    }
-
-    // Enhance soil data with soil type information if available
-    if (soilTypeData && soilData) {
-      // Use the professional soil classification as the primary type
-      soilData.type = soilTypeData.soilType;
-      soilData.soilType = soilTypeData.soilType;
-      soilData.soilTypeSource = soilTypeData.source;
-    } else if (soilTypeData && !soilData) {
-      // If we have soil type but no other soil data, create basic soil data
-      soilData = {
-        type: soilTypeData.soilType, // Use professional classification as primary
-        soilType: soilTypeData.soilType,
-        soilTypeSource: soilTypeData.source,
-        waterHoldingCapacity: this.soilWaterCapacity.unknown,
-        drainage: 'moderate',
-        source: 'limited'
-      };
-
-      if (!result.metadata.warnings) {
-        result.metadata.warnings = [];
-      }
-      result.metadata.warnings.push('Limited soil data - using soil type information only');
     }
 
     // Calculate evapotranspiration
@@ -447,28 +294,15 @@ class IrrigationService {
       dataSource: {
         weather: weatherData ? 'real' : 'unavailable',
         soil: soilData && soilData.source !== 'default' ? 'real' : 'limited',
-        soilType: soilTypeData ? 'real' : 'unavailable',
         reliability: result.metadata.dataAvailability.hasRealData ? 'high' : 'limited'
       }
     };
 
     result.waterBalance = waterBalance;
     result.evapotranspiration = etData;
-    result.weather = weatherData ? {
-      ...weatherData,
-      source: 'real'
-    } : null;
-    result.soil = soilData ? {
-      ...soilData,
-      source: soilData.source === 'default' ? 'limited' : 'real'
-    } : null;
-
-    logger.info('Irrigation recommendation calculated', {
-      weatherAvailable: !!weatherData,
-      soilAvailable: !!soilData,
-      hasRealData: result.metadata.dataAvailability.hasRealData,
-      recommendationStatus: recommendation.status
-    });
+    result.weather = weatherData;
+    result.soil = soilData;
+    result.airQuality = aqData;
 
     return result;
   }
@@ -481,36 +315,43 @@ class IrrigationService {
     const rootDepth = 0.6; // meters (typical for most crops)
     const totalWaterCapacity = soilCapacity * rootDepth;
 
-    // Calculate days since last irrigation
-    const daysSinceIrrigation = lastIrrigation
-      ? Math.floor((Date.now() - new Date(lastIrrigation).getTime()) / (1000 * 60 * 60 * 24))
-      : 7; // Default to 7 days if no previous irrigation
+    // Use real soil moisture if available, otherwise calculate
+    let currentMoisture;
+    let moisturePercentage;
 
-    // Calculate water loss due to ET
-    const waterLoss = etData.etCrop * daysSinceIrrigation;
+    if (soilData.source === 'Open-Meteo' && soilData.moistureMean !== undefined) {
+      // Open-Meteo gives moisture in % (0-100 after our processing)
+      moisturePercentage = soilData.moistureMean;
+      currentMoisture = (moisturePercentage / 100) * totalWaterCapacity;
+    } else {
+      // Fallback calculation logic
+      const daysSinceIrrigation = lastIrrigation
+        ? Math.floor((Date.now() - new Date(lastIrrigation).getTime()) / (1000 * 60 * 60 * 24))
+        : 7;
 
-    // Calculate water gain from rainfall
-    const waterGain = weatherData.forecast
-      .slice(0, daysSinceIrrigation)
-      .reduce((sum, day) => sum + (day.precipitation || 0), 0);
+      const waterLoss = etData.etCrop * daysSinceIrrigation;
+      const waterGain = weatherData.forecast
+        .slice(0, daysSinceIrrigation > 7 ? 7 : daysSinceIrrigation)
+        .reduce((sum, day) => sum + (day.precipitation || 0), 0);
 
-    // Current soil moisture (simplified)
-    const currentMoisture = Math.max(0, totalWaterCapacity * 0.8 - waterLoss + waterGain);
-    const moisturePercentage = (currentMoisture / totalWaterCapacity) * 100;
+      currentMoisture = Math.max(0, totalWaterCapacity * (soilData.currentMoisture ? soilData.currentMoisture / 100 : 0.8) - waterLoss + waterGain);
+      moisturePercentage = (currentMoisture / totalWaterCapacity) * 100;
+    }
 
     // Critical thresholds
     const criticalThreshold = totalWaterCapacity * 0.3; // 30% of capacity
     const optimalThreshold = totalWaterCapacity * 0.7; // 70% of capacity
 
+    // Ensure we handle potentially NaN due to missing data gracefully
+    currentMoisture = isNaN(currentMoisture) ? 0 : currentMoisture;
+    moisturePercentage = isNaN(moisturePercentage) ? 0 : moisturePercentage;
+
     return {
       currentMoisture: Math.round(currentMoisture),
       totalCapacity: Math.round(totalWaterCapacity),
       moisturePercentage: Math.round(moisturePercentage),
-      waterLoss: Math.round(waterLoss),
-      waterGain: Math.round(waterGain),
       isCritical: currentMoisture < criticalThreshold,
-      isOptimal: currentMoisture >= optimalThreshold,
-      daysSinceIrrigation
+      isOptimal: currentMoisture >= optimalThreshold
     };
   }
 
@@ -564,10 +405,7 @@ class IrrigationService {
       reason = 'Soil moisture adequate for now. Reassess tomorrow based on weather conditions.';
     }
 
-    // Calculate optimal irrigation times
     const optimalTimes = this.calculateOptimalIrrigationTimes(weatherData.current);
-
-    // Water conservation tips
     const conservationTips = this.getWaterConservationTips(status, weatherData);
 
     return {
@@ -589,7 +427,6 @@ class IrrigationService {
    * Get crop coefficient based on crop type and growth stage
    */
   getCropCoefficient(cropType, growthStage) {
-    // Handle plural forms and normalize crop type
     const normalizedCropType = this.normalizeCropType(cropType);
     const cropData = this.cropCoefficients[normalizedCropType] || this.cropCoefficients.default;
     return cropData[growthStage] || cropData.mid;
@@ -600,51 +437,34 @@ class IrrigationService {
    */
   normalizeCropType(cropType) {
     if (!cropType) return 'default';
-
     const cropTypeMap = {
-      'tomatoes': 'tomato',
-      'tomato': 'tomato',
-      'corn': 'corn',
-      'maize': 'corn',
-      'rice': 'rice',
-      'wheat': 'wheat',
-      'potatoes': 'potato',
-      'potato': 'potato',
+      'tomatoes': 'tomato', 'tomato': 'tomato',
+      'corn': 'corn', 'maize': 'corn',
+      'rice': 'rice', 'wheat': 'wheat',
+      'potatoes': 'potato', 'potato': 'potato',
       'cassava': 'cassava',
-      'mixed_crops': 'default',
-      'mixed crops': 'default',
+      'mixed_crops': 'default', 'mixed crops': 'default',
       'unknown': 'default'
     };
-
-    const normalized = cropTypeMap[cropType.toLowerCase()];
-    return normalized || 'default';
+    return cropTypeMap[cropType.toLowerCase()] || 'default';
   }
 
   /**
    * Calculate optimal irrigation times based on weather
    */
   calculateOptimalIrrigationTimes(currentWeather) {
-    const { temperature, windSpeed } = currentWeather;
-
-    // Early morning is always good
+    const { temperature } = currentWeather;
     const earlyMorning = {
       time: '05:30 - 07:00',
       reason: 'Low evaporation, good water absorption',
       efficiency: 95
     };
-
-    // Evening time depends on temperature
-    const eveningTime = temperature > 30
-      ? '18:30 - 20:00'
-      : '17:00 - 19:00';
-
+    const eveningTime = temperature > 30 ? '18:30 - 20:00' : '17:00 - 19:00';
     const evening = {
       time: eveningTime,
       reason: 'Cooler temperatures, reduced water loss',
       efficiency: 85
     };
-
-    // Avoid midday unless urgent
     const avoid = {
       time: '10:00 - 16:00',
       reason: 'High evaporation, water stress on plants',
@@ -663,34 +483,16 @@ class IrrigationService {
    */
   getWaterConservationTips(status, weatherData) {
     const tips = [
-      {
-        tip: 'Use drip irrigation for 30-50% water savings',
-        impact: 'high',
-        savings: '30-50%'
-      },
-      {
-        tip: 'Apply mulch around plants to reduce evaporation',
-        impact: 'medium',
-        savings: '15-25%'
-      }
+      { tip: 'Use drip irrigation for 30-50% water savings', impact: 'high', savings: '30-50%' },
+      { tip: 'Apply mulch around plants to reduce evaporation', impact: 'medium', savings: '15-25%' }
     ];
 
     if (weatherData.current.windSpeed > 15) {
-      tips.push({
-        tip: 'Avoid irrigation during windy conditions to reduce drift',
-        impact: 'medium',
-        savings: '10-20%'
-      });
+      tips.push({ tip: 'Avoid irrigation during windy conditions to reduce drift', impact: 'medium', savings: '10-20%' });
     }
-
     if (status === 'urgent') {
-      tips.push({
-        tip: 'Consider split irrigation to improve absorption',
-        impact: 'high',
-        savings: '20-30%'
-      });
+      tips.push({ tip: 'Consider split irrigation to improve absorption', impact: 'high', savings: '20-30%' });
     }
-
     return tips;
   }
 
@@ -699,21 +501,10 @@ class IrrigationService {
    */
   calculateNextAssessment(status) {
     const now = new Date();
-    let hoursToAdd;
-
-    switch (status) {
-      case 'urgent':
-        hoursToAdd = 6;
-        break;
-      case 'needed':
-        hoursToAdd = 24;
-        break;
-      case 'skip':
-        hoursToAdd = 72;
-        break;
-      default:
-        hoursToAdd = 48;
-    }
+    let hoursToAdd = 48;
+    if (status === 'urgent') hoursToAdd = 6;
+    else if (status === 'needed') hoursToAdd = 24;
+    else if (status === 'skip') hoursToAdd = 72;
 
     return new Date(now.getTime() + hoursToAdd * 60 * 60 * 1000);
   }
@@ -722,15 +513,15 @@ class IrrigationService {
    * Calculate irrigation cost estimate
    */
   calculateIrrigationCost(amount) {
-    const waterCostPerLiter = 0.001; // $0.001 per liter (adjust based on location)
-    const energyCost = amount * 0.0005; // Energy cost for pumping
+    const waterCostPerLiter = 0.2; // INR per liter
+    const energyCost = amount * 0.02; // INR for energy
     const totalCost = (amount * waterCostPerLiter) + energyCost;
 
     return {
       water: Math.round(amount * waterCostPerLiter * 100) / 100,
       energy: Math.round(energyCost * 100) / 100,
       total: Math.round(totalCost * 100) / 100,
-      currency: 'USD'
+      currency: 'INR'
     };
   }
 
@@ -738,19 +529,13 @@ class IrrigationService {
    * Calculate environmental impact
    */
   calculateEnvironmentalImpact(amount, status) {
-    const co2PerLiter = 0.0003; // kg CO2 per liter (pumping energy)
+    const co2PerLiter = 0.0003;
     const co2Impact = amount * co2PerLiter;
 
-    let sustainability;
-    if (status === 'optimal' || status === 'skip') {
-      sustainability = 'excellent';
-    } else if (status === 'monitor') {
-      sustainability = 'good';
-    } else if (status === 'needed') {
-      sustainability = 'moderate';
-    } else {
-      sustainability = 'concerning';
-    }
+    let sustainability = 'concerning';
+    if (status === 'optimal' || status === 'skip') sustainability = 'excellent';
+    else if (status === 'monitor') sustainability = 'good';
+    else if (status === 'needed') sustainability = 'moderate';
 
     return {
       co2Footprint: Math.round(co2Impact * 1000) / 1000,
@@ -761,211 +546,73 @@ class IrrigationService {
   }
 
   /**
-   * Process OpenEPI weather data
+   * Process Open-Meteo weather data
    */
-  processWeatherData(rawData) {
-    try {
-      const timeseries = rawData.properties.timeseries;
-      const current = timeseries[0].data.instant.details;
+  processWeatherData(data) {
+    const current = data.current;
 
-      const forecast = timeseries.slice(0, 7).map(entry => {
-        const details = entry.data.instant.details;
-        const next6h = entry.data.next_6_hours;
+    // Map WMO codes to simple summaries
+    const getWeatherSummary = (code) => {
+      if (code === 0) return 'clear';
+      if (code < 3) return 'partly-cloudy';
+      if (code < 50) return 'cloudy';
+      if (code < 80) return 'rain';
+      if (code < 90) return 'heavy-rain';
+      return 'storm';
+    };
 
-        return {
-          time: entry.time,
-          temperature: details.air_temperature,
-          humidity: details.relative_humidity,
-          windSpeed: details.wind_speed,
-          precipitation: next6h ? (next6h.details?.precipitation_amount || next6h.details?.precipitation || 0) : 0,
-          summary: next6h ? next6h.summary.symbol_code : 'fair_day'
-        };
-      });
-
-      return {
-        current: {
-          temperature: current.air_temperature,
-          humidity: current.relative_humidity,
-          windSpeed: current.wind_speed,
-          solarRadiation: 20 // Estimated, as not always available
-        },
-        forecast,
-        source: 'OpenEPI'
-      };
-    } catch (error) {
-      logger.error('Error processing weather data', { error: error.message });
-      throw new Error('Invalid weather data format');
-    }
-  }
-
-  /**
-   * Process OpenEPI soil data
-   */
-  processSoilData(rawData) {
-    try {
-      // Handle OpenEPI soil property format (layers structure)
-      if (rawData.properties && rawData.properties.layers) {
-        const availableData = {};
-
-        // Extract all available properties from layers
-        rawData.properties.layers.forEach(layer => {
-          const depth030 = layer.depths.find(d => d.label === '0-30cm');
-          if (depth030 && depth030.values && depth030.values.mean !== undefined) {
-            availableData[layer.code] = depth030.values.mean;
-          }
-        });
-
-        // Check if we have minimal required data
-        if (Object.keys(availableData).length === 0) {
-          throw new Error('No soil property data available for 0-30cm depth');
-        }
-
-        // Check if we have texture data (ideal case) or at least some soil properties
-        const hasTextureData = availableData.clay && availableData.sand && availableData.silt;
-        const hasMinimalData = Object.keys(availableData).length > 0;
-
-        if (!hasMinimalData) {
-          throw new Error('No soil property data available for this location. Cannot provide irrigation recommendations without soil data.');
-        }
-
-        if (!hasTextureData) {
-          // Log what data is available
-          logger.warn('Limited soil data available', {
-            availableProperties: Object.keys(availableData)
-          });
-
-          // Check if we have at least organic matter or other usable properties
-          if (!availableData.ocs && !availableData.soc && !availableData.phh2o) {
-            throw new Error(`Limited soil data available for this location. Available properties: ${Object.keys(availableData).join(', ')}. Need texture data (clay, sand, silt) or more comprehensive soil properties for reliable recommendations.`);
-          }
-        }
-
-        const clayPercent = availableData.clay;
-        const sandPercent = availableData.sand;
-        const siltPercent = availableData.silt;
-        const ph = availableData.phh2o;
-        const organicCarbon = availableData.soc;
-        const organicCarbonStocks = availableData.ocs;
-        const bulkDensity = availableData.bdod;
-
-        let soilType = 'unknown';
-        let drainage = 'moderate';
-        let waterHoldingCapacity = 150; // Default reasonable value
-
-        const result = {
-          source: 'OpenEPI',
-          availableProperties: Object.keys(availableData)
-        };
-
-        // If we have texture data, use it fully
-        if (hasTextureData) {
-          // Determine soil type based on texture
-          if (clayPercent > 40) soilType = 'clay';
-          else if (sandPercent > 70) soilType = 'sand';
-          else if (siltPercent > 40) soilType = 'silt';
-          else if (clayPercent > 25) soilType = 'clay_loam';
-          else if (sandPercent > 50) soilType = 'sandy_loam';
-          else if (siltPercent > 25) soilType = 'silt_loam';
-          else soilType = 'loam';
-
-          // Calculate water holding capacity
-          const baseCapacity = clayPercent * 2.5 + siltPercent * 1.5 + sandPercent * 0.8;
-          const organicMatterBonus = organicCarbon ? organicCarbon * 10 : (organicCarbonStocks ? organicCarbonStocks * 2 : 0);
-          waterHoldingCapacity = Math.round(baseCapacity + organicMatterBonus);
-
-          // Determine drainage
-          if (sandPercent > 60) drainage = 'good';
-          else if (clayPercent > 35) drainage = 'poor';
-
-          result.texture = {
-            clay: Math.round(clayPercent),
-            sand: Math.round(sandPercent),
-            silt: Math.round(siltPercent)
-          };
-        } else {
-          // Limited data mode - make reasonable estimates based on available data
-          logger.info('Using limited soil data mode', { availableProperties: Object.keys(availableData) });
-
-          // Estimate water holding capacity from organic matter if available
-          if (organicCarbonStocks) {
-            // OCS is in t/ha, higher values suggest better water retention
-            waterHoldingCapacity = Math.round(120 + (organicCarbonStocks * 2)); // Rough estimate
-          } else if (organicCarbon) {
-            waterHoldingCapacity = Math.round(120 + (organicCarbon * 15));
-          }
-
-          soilType = 'mixed_composition'; // Indicate we don't have texture data
-          result.dataLimitation = 'Texture data unavailable - using available soil properties for estimates';
-        }
-
-        result.type = soilType;
-        result.drainage = drainage;
-        result.waterHoldingCapacity = waterHoldingCapacity;
-
-        // Add optional properties only if available
-        if (ph !== undefined) result.ph = Math.round(ph * 10) / 10;
-        if (organicCarbon !== undefined) result.organicMatter = Math.round(organicCarbon * 10) / 10;
-        if (bulkDensity !== undefined) result.bulkDensity = Math.round(bulkDensity);
-
-        return result;
-      }
-
-      throw new Error('Invalid OpenEPI soil data format - no layers found');
-    } catch (error) {
-      logger.error('Error processing soil data', { error: error.message });
-      throw new Error(`Cannot process soil data: ${error.message}`);
-    }
-  }
-
-  /**
-   * Generate mock weather data for testing
-   */
-  generateMockWeatherData(latitude, longitude) {
-    const baseTemp = 25 + (Math.random() - 0.5) * 10;
-    const baseHumidity = 60 + (Math.random() - 0.5) * 30;
-
-    const forecast = [];
-    for (let i = 0; i < 7; i++) {
-      const tempVariation = (Math.random() - 0.5) * 5;
-      const humidityVariation = (Math.random() - 0.5) * 20;
-      const rainChance = Math.random();
-
-      forecast.push({
-        time: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString(),
-        temperature: Math.round((baseTemp + tempVariation) * 10) / 10,
-        humidity: Math.max(20, Math.min(90, baseHumidity + humidityVariation)),
-        windSpeed: Math.round((5 + Math.random() * 15) * 10) / 10,
-        precipitation: rainChance > 0.7 ? Math.round(Math.random() * 20 * 10) / 10 : 0,
-        summary: rainChance > 0.7 ? 'rain' : (rainChance > 0.4 ? 'cloudy' : 'sunny')
-      });
-    }
+    const forecast = data.daily.time.map((time, index) => ({
+      time: time,
+      temperature: {
+        max: data.daily.temperature_2m_max[index],
+        min: data.daily.temperature_2m_min[index]
+      },
+      precipitation: data.daily.precipitation_sum[index],
+      precipitationProbability: data.daily.precipitation_probability_max[index] || 0,
+      summary: getWeatherSummary(data.daily.weather_code[index])
+    }));
 
     return {
       current: {
-        temperature: forecast[0].temperature,
-        humidity: forecast[0].humidity,
-        windSpeed: forecast[0].windSpeed,
-        solarRadiation: 18 + Math.random() * 8
+        temperature: current.temperature_2m,
+        humidity: current.relative_humidity_2m,
+        windSpeed: current.wind_speed_10m,
+        solarRadiation: 20, // Proxy/Estimated
+        summary: getWeatherSummary(current.weather_code)
       },
-      forecast,
-      source: 'Mock Data'
+      forecast: forecast,
+      source: 'Open-Meteo'
     };
   }
 
   /**
-   * Generate mock soil data for testing
+   * Process Open-Meteo soil data
    */
-  generateMockSoilData(latitude, longitude) {
-    const soilTypes = ['sandy', 'loam', 'clay', 'sandy_loam', 'clay_loam'];
-    const randomType = soilTypes[Math.floor(Math.random() * soilTypes.length)];
+  processSoilData(data) {
+    // Open-Meteo returns soil moisture in m³/m³. Convert to percentage.
+    // Use the first hour (current time approximation)
+    const index = 0;
 
+    // Calculate mean moisture from different depths
+    const moisture0 = data.hourly.soil_moisture_0_to_1cm ? data.hourly.soil_moisture_0_to_1cm[index] : 0.2;
+    const moisture3 = data.hourly.soil_moisture_3_to_9cm ? data.hourly.soil_moisture_3_to_9cm[index] : 0.25;
+    const moisture9 = data.hourly.soil_moisture_9_to_27cm ? data.hourly.soil_moisture_9_to_27cm[index] : 0.3;
+
+    // Weighted mean
+    const meanMoisture = (moisture0 * 1 + moisture3 * 2 + moisture9 * 3) / 6;
+
+    // Open-Meteo doesn't provide chemical properties, so we estimate based on typical Loam soil
+    // In a real app, this would come from a specific soil database
     return {
-      type: randomType,
-      ph: Math.round((6.0 + Math.random() * 2.5) * 10) / 10,
-      organicMatter: Math.round((1.5 + Math.random() * 3) * 10) / 10,
-      drainage: ['poor', 'moderate', 'good'][Math.floor(Math.random() * 3)],
-      waterHoldingCapacity: this.soilWaterCapacity[randomType],
-      source: 'Mock Data'
+      type: 'loam', // Default assumption
+      moistureMean: Math.round(meanMoisture * 100),
+      tempSurface: data.hourly.soil_temperature_0cm ? data.hourly.soil_temperature_0cm[index] : null,
+      tempRoot: data.hourly.soil_temperature_18cm ? data.hourly.soil_temperature_18cm[index] : null,
+      ph: 6.5, // Typical for loam
+      organicMatter: 3.5, // Typical range 2-5%
+      drainage: 'well',
+      waterHoldingCapacity: 160, // mm/m
+      source: 'Open-Meteo'
     };
   }
 }
