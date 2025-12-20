@@ -6,6 +6,7 @@ import { useOffline } from '../../contexts/OfflineContext'
 import Header from './Header'
 import Navigation from './Navigation'
 import FloatingNavigation from './FloatingNavigation'
+import VoiceLauncher from '../Voice/VoiceLauncher'
 import OfflineIndicator from '../Common/OfflineIndicator'
 import PWAPrompt from '../Common/PWAPrompt'
 import UpdatePrompt from '../Common/UpdatePrompt'
@@ -95,6 +96,11 @@ const Layout = ({ children }) => {
         {showNavigation && (
           <FloatingNavigation />
         )}
+      </AnimatePresence>
+
+      {/* Voice Assistant Launcher */}
+      <AnimatePresence>
+        {isAuthenticated && <VoiceLauncher />}
       </AnimatePresence>
     </div>
   )

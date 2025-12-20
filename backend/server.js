@@ -148,6 +148,7 @@ app.use('/api/planning', planningRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/insights', require('./routes/insights'));
+app.use('/api/voice', require('./routes/voiceRoutes'));
 
 // Catch-all route for undefined routes
 app.all('*', (req, res) => {

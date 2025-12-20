@@ -16,7 +16,7 @@ import { apiService } from '../services/api'
 import WeatherWidget from '../components/Dashboard/WeatherWidget'
 import RiskAnalysisWidget from '../components/Dashboard/RiskAnalysisWidget'
 import ToolNavigationCard from '../components/Dashboard/ToolNavigationCard'
-import AnimatedMascot from '../components/Dashboard/AnimatedMascot'
+
 import FloatingParticles from '../components/Dashboard/FloatingParticles'
 
 const Dashboard = () => {
@@ -218,11 +218,7 @@ const Dashboard = () => {
       <FloatingParticles weatherType={dashboardData?.weather?.animations?.primary || 'sunny'} />
 
       {/* Animated Mascot */}
-      <AnimatedMascot
-        position="bottom-right"
-        mood="happy"
-        message="Great job on your farming journey! 🌱"
-      />
+
 
       {/* Invisible overlay to prevent navigation interference */}
       <div className="fixed bottom-0 left-0 w-full h-24 pointer-events-none z-[9998]"></div>

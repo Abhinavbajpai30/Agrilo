@@ -27,6 +27,7 @@
   "author": "Agrilo Team",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/text-to-speech": "^6.4.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/earthengine": "^1.7.4",
     "axios": "^1.6.2",

@@ -25,6 +25,9 @@ const Profile = lazy(() => import('./pages/Profile/Profile'))
 const Settings = lazy(() => import('./pages/Settings/Settings'))
 const OnboardingFlow = lazy(() => import('./pages/Onboarding/OnboardingFlow'))
 const AddFarm = lazy(() => import('./pages/Farm/AddFarm'))
+const VoiceChat = lazy(() => import('./pages/Voice/VoiceChat'))
+
+// Components that shouldn't be lazy loaded
 
 function App() {
   return (
@@ -42,83 +45,89 @@ function App() {
                       <Route path="/about" element={<Layout><About /></Layout>} />
                       <Route path="/login" element={<Layout><Login /></Layout>} />
                       <Route path="/register" element={<Layout><Register /></Layout>} />
-                      
+
                       {/* Onboarding Flow */}
                       <Route path="/onboarding/*" element={<Layout><OnboardingFlow /></Layout>} />
-                    
-                    {/* Protected Routes */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <Layout><Dashboard /></Layout>
-                      </ProtectedRoute>
-                    } />
-                    
 
-          
-          <Route path="/farm" element={
-            <ProtectedRoute>
-              <Layout><FarmManagement /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/farm/add" element={
-            <ProtectedRoute>
-              <Layout><AddFarm /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/diagnosis" element={
-            <ProtectedRoute>
-              <Layout><CropDiagnosis /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/irrigation" element={
-            <ProtectedRoute>
-              <Layout><IrrigationPlanning /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/planning" element={
-            <ProtectedRoute>
-              <Layout><CropPlanning /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Layout><Profile /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Layout><Settings /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          {/* Fallback Route */}
-          <Route path="*" element={
-            <Layout>
-              <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                <div className="text-6xl mb-4">🌾</div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Page Not Found</h1>
-                <p className="text-gray-600 text-center mb-6">
-                  The page you're looking for doesn't exist.
-                </p>
-                <button 
-                  onClick={() => window.history.back()}
-                  className="btn-primary"
-                >
-                  Go Back
-                </button>
-              </div>
-            </Layout>
-          } />
+                      {/* Protected Routes */}
+                      <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                          <Layout><Dashboard /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+
+
+                      <Route path="/farm" element={
+                        <ProtectedRoute>
+                          <Layout><FarmManagement /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/farm/add" element={
+                        <ProtectedRoute>
+                          <Layout><AddFarm /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/diagnosis" element={
+                        <ProtectedRoute>
+                          <Layout><CropDiagnosis /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/irrigation" element={
+                        <ProtectedRoute>
+                          <Layout><IrrigationPlanning /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/planning" element={
+                        <ProtectedRoute>
+                          <Layout><CropPlanning /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/profile" element={
+                        <ProtectedRoute>
+                          <Layout><Profile /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/settings" element={
+                        <ProtectedRoute>
+                          <Layout><Settings /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/voice-assistant" element={
+                        <ProtectedRoute>
+                          <VoiceChat />
+                        </ProtectedRoute>
+                      } />
+
+                      {/* Fallback Route */}
+                      <Route path="*" element={
+                        <Layout>
+                          <div className="flex flex-col items-center justify-center min-h-screen p-6">
+                            <div className="text-6xl mb-4">🌾</div>
+                            <h1 className="text-2xl font-bold text-gray-800 mb-2">Page Not Found</h1>
+                            <p className="text-gray-600 text-center mb-6">
+                              The page you're looking for doesn't exist.
+                            </p>
+                            <button
+                              onClick={() => window.history.back()}
+                              className="btn-primary"
+                            >
+                              Go Back
+                            </button>
+                          </div>
+                        </Layout>
+                      } />
                     </Routes>
                   </Suspense>
                 </AnimatePresence>
-    </div>
+              </div>
             </Router>
           </AuthProvider>
         </LanguageProvider>
