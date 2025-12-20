@@ -20,7 +20,9 @@ const Layout = ({ children }) => {
   // Determine if current page should show navigation
   useEffect(() => {
     const pathsWithNavigation = ['/dashboard', '/farm', '/diagnosis', '/irrigation', '/planning', '/profile', '/settings']
-    setShowNavigation(isAuthenticated && pathsWithNavigation.some(path => location.pathname.startsWith(path)))
+    // Hide on Farm Map page specifically
+    const isFarmMap = location.pathname === '/farm/map'
+    setShowNavigation(isAuthenticated && !isFarmMap && pathsWithNavigation.some(path => location.pathname.startsWith(path)))
   }, [location.pathname, isAuthenticated])
 
   // Page transition variants
@@ -98,9 +100,9 @@ const Layout = ({ children }) => {
         )}
       </AnimatePresence>
 
-      {/* Voice Assistant Launcher */}
+      {/* Voice Assistant Launcher - Hide on Farm Map */}
       <AnimatePresence>
-        {isAuthenticated && <VoiceLauncher />}
+        {isAuthenticated && location.pathname !== '/farm/map' && <VoiceLauncher />}
       </AnimatePresence>
     </div>
   )

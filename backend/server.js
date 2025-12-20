@@ -33,6 +33,7 @@ const irrigationRoutes = require('./routes/irrigation');
 const planningRoutes = require('./routes/planning');
 const onboardingRoutes = require('./routes/onboarding');
 const dashboardRoutes = require('./routes/dashboard');
+const issueRoutes = require('./routes/issueRoutes');
 
 // Initialize Express app
 const app = express();
@@ -149,6 +150,7 @@ app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/insights', require('./routes/insights'));
 app.use('/api/voice', require('./routes/voiceRoutes'));
+app.use('/api/issues', issueRoutes);
 
 // Catch-all route for undefined routes
 app.all('*', (req, res) => {

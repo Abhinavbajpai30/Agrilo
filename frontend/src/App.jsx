@@ -25,6 +25,7 @@ const Profile = lazy(() => import('./pages/Profile/Profile'))
 const Settings = lazy(() => import('./pages/Settings/Settings'))
 const OnboardingFlow = lazy(() => import('./pages/Onboarding/OnboardingFlow'))
 const AddFarm = lazy(() => import('./pages/Farm/AddFarm'))
+const FarmMap = lazy(() => import('./pages/Farm/FarmMap'))
 const VoiceChat = lazy(() => import('./pages/Voice/VoiceChat'))
 
 // Components that shouldn't be lazy loaded
@@ -61,6 +62,12 @@ function App() {
                       <Route path="/farm" element={
                         <ProtectedRoute>
                           <Layout><FarmManagement /></Layout>
+                        </ProtectedRoute>
+                      } />
+
+                      <Route path="/farm/map" element={
+                        <ProtectedRoute>
+                          <Layout><FarmMap /></Layout>
                         </ProtectedRoute>
                       } />
 

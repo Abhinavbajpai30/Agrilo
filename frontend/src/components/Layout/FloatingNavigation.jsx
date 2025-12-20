@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { 
+import {
   HomeIcon,
   BeakerIcon,
   CalendarDaysIcon,
   MapIcon,
   UserIcon,
-  PlusIcon
+  PlusIcon,
+  CloudIcon
 } from '@heroicons/react/24/outline'
 import {
   HomeIcon as HomeIconSolid,
   BeakerIcon as BeakerIconSolid,
   CalendarDaysIcon as CalendarDaysIconSolid,
   MapIcon as MapIconSolid,
-  UserIcon as UserIconSolid
+  UserIcon as UserIconSolid,
+  CloudIcon as CloudIconSolid
 } from '@heroicons/react/24/solid'
 
 const FloatingNavigation = () => {
@@ -55,11 +57,20 @@ const FloatingNavigation = () => {
     {
       id: 'irrigation',
       label: 'Irrigation',
-      icon: MapIcon,
-      activeIcon: MapIconSolid,
+      icon: CloudIcon,
+      activeIcon: CloudIconSolid,
       path: '/irrigation',
       color: 'from-cyan-400 to-blue-600',
       emoji: '💧'
+    },
+    {
+      id: 'farm-map',
+      label: 'Farm Map',
+      icon: MapIcon,
+      activeIcon: MapIconSolid,
+      path: '/farm/map',
+      color: 'from-green-400 to-emerald-600',
+      emoji: '🗺️'
     },
     {
       id: 'profile',
@@ -81,13 +92,13 @@ const FloatingNavigation = () => {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      
+
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false)
       } else {
         setIsVisible(true)
       }
-      
+
       setLastScrollY(currentScrollY)
     }
 
@@ -127,11 +138,10 @@ const FloatingNavigation = () => {
                   <button
                     key={item.id}
                     onClick={() => handleNavigation(item)}
-                    className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 cursor-pointer ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 cursor-pointer ${isActive
+                      ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                     style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                   >
                     <IconComponent className="w-6 h-6" />

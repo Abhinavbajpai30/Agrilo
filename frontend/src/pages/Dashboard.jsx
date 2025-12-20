@@ -128,6 +128,17 @@ const Dashboard = () => {
       route: '/irrigation',
       animation: 'water',
       stats: { savings: '30% water saved', efficiency: '92%' }
+    },
+    {
+      id: 'farm-map',
+      title: 'Interactive Farm Map',
+      subtitle: 'Visualize your fields',
+      description: 'Track farm status and report issues on the map',
+      icon: '🗺️',
+      gradient: 'from-green-400 via-emerald-500 to-teal-500',
+      route: '/farm/map',
+      animation: 'map',
+      stats: { active: 'Active Monitor', alerts: '0 Alerts' }
     }
   ]
 

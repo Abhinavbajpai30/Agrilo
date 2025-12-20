@@ -37,10 +37,10 @@ class ApiService {
         } else {
           console.log('No auth token found for request:', config.url)
         }
-        
+
         // Add request timestamp for tracking
         config.metadata = { startTime: Date.now() }
-        
+
         return config
       },
       (error) => {
@@ -56,7 +56,7 @@ class ApiService {
         console.log(`API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - ${responseTime}ms`)
         console.log('Response status:', response.status)
         console.log('Response data:', response.data)
-        
+
         return response
       },
       async (error) => {
@@ -70,14 +70,14 @@ class ApiService {
         // Handle 401 errors (unauthorized) - but not for auth endpoints
         if (error.response?.status === 401 && !originalRequest._retry) {
           // Don't attempt token refresh for login/register endpoints
-          const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
-                                originalRequest.url?.includes('/auth/register') ||
-                                originalRequest.url?.includes('/auth/forgot-password') ||
-                                originalRequest.url?.includes('/auth/reset-password');
-          
+          const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/register') ||
+            originalRequest.url?.includes('/auth/forgot-password') ||
+            originalRequest.url?.includes('/auth/reset-password');
+
           if (!isAuthEndpoint) {
             originalRequest._retry = true
-            
+
             try {
               await this.refreshToken()
               // Retry the original request with new token
@@ -208,12 +208,12 @@ class ApiService {
   async get(url, config = {}) {
     const cacheKey = this.getCacheKey('GET', url, config)
     const category = this.getCacheCategory(url)
-    
+
     // Skip cache if explicitly disabled
     if (config.skipCache) {
       return this.client.get(url, config)
     }
-    
+
     // Try to get from cache first
     if (category) {
       try {
@@ -226,11 +226,11 @@ class ApiService {
         console.warn('Cache get failed:', error)
       }
     }
-    
+
     // Make network request
     try {
       const response = await this.client.get(url, config)
-      
+
       // Cache successful responses
       if (category && response.data) {
         try {
@@ -240,7 +240,7 @@ class ApiService {
           console.warn('Cache set failed:', error)
         }
       }
-      
+
       return response
     } catch (error) {
       // Try to serve stale cache on network error
@@ -249,19 +249,19 @@ class ApiService {
           const staleData = await cacheService.get(cacheKey, category)
           if (staleData) {
             console.log('API: Serving stale cache due to network error:', url)
-            return { 
-              data: { 
-                ...staleData, 
-                _stale: true, 
-                _cached: true 
-              } 
+            return {
+              data: {
+                ...staleData,
+                _stale: true,
+                _cached: true
+              }
             }
           }
         } catch (cacheError) {
           console.warn('Stale cache get failed:', cacheError)
         }
       }
-      
+
       throw error
     }
   }
@@ -348,7 +348,7 @@ class ApiService {
   // Sync cached offline requests
   async syncOfflineRequests() {
     const cachedRequests = JSON.parse(localStorage.getItem('agrilo_offline_requests') || '[]')
-    
+
     if (cachedRequests.length === 0) {
       return { success: true, synced: 0, failed: 0 }
     }
@@ -516,6 +516,13 @@ export const healthApi = {
 
 export const errorApi = {
   report: (errorData) => apiService.post('/errors/report', errorData),
+}
+
+export const issueApi = {
+  report: (issueData) => apiService.post('/issues', issueData),
+  getNearby: (lat, lon, radius) => apiService.get('/issues/nearby', { params: { latitude: lat, longitude: lon, radius } }),
+  getByFarm: (farmId) => apiService.get(`/issues/farm/${farmId}`),
+  delete: (issueId) => apiService.delete(`/issues/${issueId}`),
 }
 
 export default apiService
