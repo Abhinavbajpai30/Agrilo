@@ -67,32 +67,11 @@ router.post('/', authenticateUser, async (req, res) => {
                 for (const user of users) {
                     if (user.personalInfo && user.personalInfo.phoneNumber) {
                         try {
-                            // 1. Try sending via Template (Preferred for 24h window policy)
-                            // Template Name: farm_alert_nearby
-                            // Variables: {{1}}=Type, {{2}}=Severity, {{3}}=Description
-                            const components = [
-                                {
-                                    type: 'body',
-                                    parameters: [
-                                        { type: 'text', text: type.toUpperCase() },
-                                        { type: 'text', text: severity },
-                                        { type: 'text', text: description.substring(0, 60) } // Truncate if too long for template param limits
-                                    ]
-                                }
-                            ];
+                            // User Request: Use free-form text messages (assuming 24h window is open)
+                            const message = `⚠️ *Farm Alert Nearby* ⚠️\n\nA new issue of type *${type.toUpperCase()}* has been reported nearby.\n\n📝 *Description:* ${description}\nseverity: ${severity}\n\nPlease check your farm and take necessary precautions.`;
 
-                            const templateSent = await whatsAppService.sendTemplate(
-                                user.personalInfo.phoneNumber,
-                                'farm_alert_nearby',
-                                components
-                            );
-
-                            // 2. Fallback to Text if Template fails (or not configured yet, effectively)
-                            // Note: If template param fails, we log it.
-                            if (!templateSent) {
-                                const message = `⚠️ *Farm Alert Nearby* ⚠️\n\nA new issue of type *${type.toUpperCase()}* has been reported nearby.\n\n📝 *Description:* ${description}\nseverity: ${severity}\n\nPlease check your farm and take necessary precautions.`;
-                                await whatsAppService.sendAlert(user.personalInfo.phoneNumber, message);
-                            }
+                            // Send text message directly
+                            await whatsAppService.sendAlert(user.personalInfo.phoneNumber, message);
 
                         } catch (sendError) {
                             console.error(`[ALERT] Failed to send to ${user.personalInfo.phoneNumber}`, sendError);

@@ -54,38 +54,74 @@ exports.processVoiceQuery = async (req, res) => {
         let userContext = "User: Unknown";
         let farmContext = "Farm: No data available";
 
+        // Default values for sensitive context variables to avoid ReferenceError
+        let experience = 'Unknown experience';
+        let water = 'None';
+        let risks = 'None known';
+
         if (req.user) {
-            userContext = `Farmer Name: ${req.user.personalInfo?.firstName}`;
+            // --- User Context ---
+            const user = req.user;
+            experience = user.farmingProfile?.experienceLevel || 'Unknown experience';
+            const farmingType = user.farmingProfile?.farmingType || 'Unknown type';
+            const preferredLang = user.preferences?.language || 'en';
+
+            userContext = `
+            Farmer Name: ${user.personalInfo?.firstName || 'Farmer'}
+            Experience Level: ${experience}
+            Farming Type: ${farmingType}
+            Location: ${user.location?.village || ''}, ${user.location?.district || ''}, ${user.location?.region || ''}
+            Preferred Language Code: ${preferredLang}
+            `;
+
             const userId = req.user._id;
 
             try {
-                // Fetch the active farm (or the first one if multiple/none specified)
+                // Fetch the active farm with fully populated fields
+                // We don't need to populate everything, but getting the raw data is enough for the text summary
                 const farm = await Farm.findOne({ owner: userId, 'status.isActive': true });
 
                 if (farm) {
-                    const crops = farm.currentCrops && farm.currentCrops.length > 0
-                        ? farm.currentCrops.map(c => `${c.cropName} (${c.growthStage || 'unknown stage'})`).join(', ')
-                        : 'None';
+                    // --- Farm Context ---
 
+                    // Crops
+                    const crops = farm.currentCrops && farm.currentCrops.length > 0
+                        ? farm.currentCrops.map(c =>
+                            `${c.cropName} (${c.growthStage || 'unknown stage'}, Health: ${c.healthStatus?.overall || 'unknown'})`
+                        ).join(', ')
+                        : 'No active crops';
+
+                    // Soil
                     const soil = farm.soilData
-                        ? `Soil: ${farm.soilData.composition?.soilType || 'Mixed'}, pH ${farm.soilData.chemistry?.pH?.value || 'N/A'}`
+                        ? `Type: ${farm.soilData.composition?.soilType || 'Mixed'}. ` +
+                        `pH: ${farm.soilData.chemistry?.pH?.value || 'N/A'}. ` +
+                        `Nutrients: N=${farm.soilData.nutrients?.nitrogen?.status || '?'}, P=${farm.soilData.nutrients?.phosphorus?.status || '?'}, K=${farm.soilData.nutrients?.potassium?.status || '?'}`
                         : 'Soil data unknown';
 
-                    const locationStr = farm.location
-                        ? `${farm.location.address || ''}, ${farm.location.region || ''}`
-                        : 'Unknown location';
-
-                    const water = farm.infrastructure?.waterSources
+                    // Infrastructure/Water
+                    water = farm.infrastructure?.waterSources
                         ? farm.infrastructure.waterSources.map(w => w.type).join(', ')
                         : 'None';
 
+                    const equipment = farm.infrastructure?.equipment
+                        ? farm.infrastructure.equipment.map(e => e.type).join(', ')
+                        : 'None';
+
+                    // Risks
+                    risks = farm.environmental?.riskFactors
+                        ? farm.environmental.riskFactors.map(r => `${r.type} (${r.probability})`).join(', ')
+                        : 'None known';
+
                     farmContext = `
-                Farm Name: ${farm.farmInfo?.name || 'Unnamed Farm'}
-                Location: ${locationStr}
-                Current Crops: ${crops}
-                Soil Info: ${soil}
-                Water Sources: ${water}
-                `;
+                    Farm Name: ${farm.farmInfo?.name || 'Unnamed Farm'}
+                    Farm Type: ${farm.farmInfo?.farmType || 'General'}
+                    Size: ${farm.farmInfo?.totalArea?.value || '?'}${farm.farmInfo?.totalArea?.unit || ''}
+                    Current Crops: ${crops}
+                    Soil Conditions: ${soil}
+                    Water Sources: ${water}
+                    Equipment Available: ${equipment}
+                    Environmental Risks: ${risks}
+                    `;
                 }
             } catch (dbError) {
                 logger.error(`Error fetching farm context: ${dbError.message}`);
@@ -93,13 +129,33 @@ exports.processVoiceQuery = async (req, res) => {
             }
         }
 
+        // --- Platform Capabilities Context ---
+        const platformContext = `
+        AVAILABLE PLATFORM FEATURES:
+                    1. "Crop Doctor" (Diagnosis): Detects plant diseases from photos. Use this if the user asks about sick plants, pests, or weird spots on leaves.
+                    2. "Farm Map": Shows the farm's boundaries and fields. Use if user asks about land area or field locations. It also shows nearby alerts like pest outbreaks or weather warnings.
+                    3. "Smart Irrigation": Provides watering schedules. Use if user asks when/how much to water.
+                    4. "Crop Planning": Helps plan what to plant next based on season/soil.
+                    5. "Weather": Real-time forecasts and alerts.
+                    `;
+
+        // Combined Context for Gemini
+        const fullContext = `
+                    USER CONTEXT:
+                    ${userContext}
+                    
+                    FARM CONTEXT:
+                    ${farmContext}
+
+                    ${platformContext}
+                    `;
+
         logger.info(`Context prepared for Gemini.`);
 
         // --- Step A: Gemini Analysis ---
         let textResponse;
         const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-flash'];
-        // Adjusted strategy: Try 3.0 -> 2.5 (as asked) -> 1.5 (safety net).
-        // Note: 'gemini-2.5-flash' might not exist, but valid to try if user insists. 
+        // Adjusted strategy: Try 3.0 -> 2.5 (as asked) -> 1.5 (safety net). 
 
         let lastError;
 
@@ -110,17 +166,19 @@ exports.processVoiceQuery = async (req, res) => {
                     model: modelName,
                     systemInstruction: {
                         parts: [{
-                            text: `You are AgriBot, an expert agricultural assistant for ${req.user?.personalInfo?.firstName || 'the farmer'}. 
+                            text: `You are AgriloBot, an expert agricultural assistant for ${req.user?.personalInfo?.firstName || 'the farmer'}. 
                     
-                    CONTEXT:
-                    ${userContext}
-                    ${farmContext}
+                    ${fullContext}
 
                     INSTRUCTIONS:
                     1. Listen to the farmer's query in the audio.
                     2. Detect the language automatically.
                     3. Answer their question briefly and helpfully in the same language they spoke.
-                    4. USE THE CONTEXT provided above to give specific advice (e.g., if they ask about irrigation, refer to their water sources or crops).
+                    4. CRITICAL: USE THE CONTEXT provided above to give specific, personalized advice.
+                       - If they ask about irrigation, refer to their specific water sources ("${water}") AND recommend the "Smart Irrigation" feature.
+                       - If they ask about crop health/diseases, mention their crops AND recommend taking a photo with the "Crop Doctor" feature.
+                       - If the query matches a platform feature (Diagnosis, Planning, Map, etc.), EXPLICITLY recommend using that feature.
+                       - Tailor the complexity of your answer to their Experience Level (${experience}).
                     5. Keep the answer concise (under 3 sentences) for voice output.
                     6. Output ONLY plain text.` }]
                     }

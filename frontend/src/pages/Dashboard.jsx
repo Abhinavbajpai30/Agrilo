@@ -12,6 +12,7 @@ import {
   FireIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { apiService } from '../services/api'
 import WeatherWidget from '../components/Dashboard/WeatherWidget'
 import RiskAnalysisWidget from '../components/Dashboard/RiskAnalysisWidget'
@@ -21,6 +22,7 @@ import FloatingParticles from '../components/Dashboard/FloatingParticles'
 
 const Dashboard = () => {
   const { user } = useAuth()
+  const { t, currentLanguage } = useLanguage()
   const [dashboardData, setDashboardData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -81,9 +83,9 @@ const Dashboard = () => {
 
   const getTimeBasedGreeting = () => {
     const hour = currentTime.getHours()
-    if (hour < 12) return { text: 'Good Morning', emoji: '🌅', gradient: 'from-orange-400 via-yellow-400 to-pink-400' }
-    if (hour < 18) return { text: 'Good Afternoon', emoji: '☀️', gradient: 'from-blue-400 via-cyan-400 to-green-400' }
-    return { text: 'Good Evening', emoji: '🌅', gradient: 'from-purple-400 via-pink-400 to-red-400' }
+    if (hour < 12) return { text: t('goodMorning'), emoji: '🌅', gradient: 'from-orange-400 via-yellow-400 to-pink-400' }
+    if (hour < 18) return { text: t('goodAfternoon'), emoji: '☀️', gradient: 'from-blue-400 via-cyan-400 to-green-400' }
+    return { text: t('goodEvening'), emoji: '🌅', gradient: 'from-purple-400 via-pink-400 to-red-400' }
   }
 
   const getWeatherGradient = () => {
@@ -98,9 +100,9 @@ const Dashboard = () => {
   const coreTools = [
     {
       id: 'crop-doctor',
-      title: 'AI Crop Doctor',
-      subtitle: 'Instant plant diagnosis',
-      description: 'Snap a photo for instant plant health analysis',
+      title: t('aiCropDoctor'),
+      subtitle: t('instantDiagnosis'),
+      description: t('snapPhotoDesc'),
       icon: '🩺',
       gradient: 'from-teal-400 via-cyan-500 to-blue-500',
       route: '/diagnosis',
@@ -109,9 +111,9 @@ const Dashboard = () => {
     },
     {
       id: 'climate-planner',
-      title: 'Climate-Smart Planner',
-      subtitle: 'Perfect timing, every season',
-      description: 'Plan your crops with weather intelligence',
+      title: t('climateSmartPlanner'),
+      subtitle: t('perfectTiming'),
+      description: t('planCropsDesc'),
       icon: '📅',
       gradient: 'from-blue-400 via-indigo-500 to-purple-500',
       route: '/planning',
@@ -120,9 +122,9 @@ const Dashboard = () => {
     },
     {
       id: 'irrigation-advisor',
-      title: 'Smart Irrigation Advisor',
-      subtitle: 'Water smarter, not harder',
-      description: 'Optimize water usage with AI recommendations',
+      title: t('smartIrrigationAdvisor'),
+      subtitle: t('waterSmarter'),
+      description: t('optimizeWaterDesc'),
       icon: '💧',
       gradient: 'from-cyan-400 via-blue-500 to-indigo-500',
       route: '/irrigation',
@@ -131,9 +133,9 @@ const Dashboard = () => {
     },
     {
       id: 'farm-map',
-      title: 'Interactive Farm Map',
-      subtitle: 'Visualize your fields',
-      description: 'Track farm status and report issues on the map',
+      title: t('interactiveFarmMap'),
+      subtitle: t('visualizeFields'),
+      description: t('trackFarmStatusDesc'),
       icon: '🗺️',
       gradient: 'from-green-400 via-emerald-500 to-teal-500',
       route: '/farm/map',
@@ -153,7 +155,7 @@ const Dashboard = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"
           />
-          <p className="text-gray-600">Loading your farm dashboard...</p>
+          <p className="text-gray-600">{t('loadingDashboard')}</p>
         </div>
       </div>
     )
@@ -171,8 +173,8 @@ const Dashboard = () => {
           <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">🌱</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Complete Your Farm Setup</h2>
-          <p className="text-gray-600 mb-6">Set up your farm to unlock the full dashboard experience</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('completeFarmSetup')}</h2>
+          <p className="text-gray-600 mb-6">{t('setupFarmDesc')}</p>
 
           {/* Debug Info */}
           <div className="bg-gray-100 rounded-lg p-4 text-sm mb-4">
@@ -189,7 +191,7 @@ const Dashboard = () => {
             onClick={() => window.location.href = '/onboarding'}
             className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-full font-semibold"
           >
-            Complete Setup
+            {t('completeSetup')}
           </motion.button>
         </motion.div>
       </div>
@@ -208,15 +210,15 @@ const Dashboard = () => {
           <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">⚠️</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Dashboard Unavailable</h2>
-          <p className="text-gray-600 mb-6">Unable to load dashboard data. Please try refreshing the page.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('dashboardUnavailable')}</h2>
+          <p className="text-gray-600 mb-6">{t('dashboardError')}</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => window.location.reload()}
             className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-full font-semibold"
           >
-            Refresh Page
+            {t('refreshPage')}
           </motion.button>
         </motion.div>
       </div>
@@ -265,7 +267,7 @@ const Dashboard = () => {
                     </h1>
                   </div>
                   <p className="text-white/90 text-lg">
-                    {dashboardData?.farm?.name || 'Your Farm'} • {dashboardData?.weather?.location?.name || 'Coordinates'} • {currentTime.toLocaleDateString()}
+                    {dashboardData?.farm?.name || t('yourFarm')} • {dashboardData?.weather?.location?.name || t('coordinates')} • {currentTime.toLocaleDateString(currentLanguage === 'hi' ? 'hi-IN' : 'en-US')}
                   </p>
                 </div>
 
@@ -333,9 +335,9 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
                   <SparklesIcon className="w-7 h-7 text-yellow-500" />
-                  <span>Your Farming Toolkit</span>
+                  <span>{t('farmingToolkit')}</span>
                 </h2>
-                <p className="text-gray-600">Choose your next action</p>
+                <p className="text-gray-600">{t('chooseAction')}</p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -362,7 +364,7 @@ const Dashboard = () => {
               >
                 <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center space-x-2">
                   <span className="text-2xl">🌱</span>
-                  <span>Crop Growth Progress</span>
+                  <span>{t('cropGrowthProgress')}</span>
                 </h3>
 
                 <div className="space-y-4">
@@ -381,7 +383,7 @@ const Dashboard = () => {
                             {crop.cropName}
                           </h4>
                           <span className="text-sm text-gray-600 capitalize">
-                            {crop.stage} stage
+                            {crop.stage} {t('stage')}
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
@@ -395,8 +397,8 @@ const Dashboard = () => {
                           </motion.div>
                         </div>
                         <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
-                          <span>{crop.percentage}% grown</span>
-                          <span>{crop.daysToHarvest} days to harvest</span>
+                          <span>{crop.percentage}% {t('grown')}</span>
+                          <span>{crop.daysToHarvest} {t('daysToHarvest')}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -413,10 +415,10 @@ const Dashboard = () => {
               className="grid grid-cols-2 md:grid-cols-4 gap-4"
             >
               {[
-                { icon: '📊', label: 'Analytics', color: 'from-blue-400 to-blue-600' },
-                { icon: '⚙️', label: 'Settings', color: 'from-gray-400 to-gray-600' },
-                { icon: '📚', label: 'Learning', color: 'from-purple-400 to-purple-600' },
-                { icon: '💬', label: 'Support', color: 'from-green-400 to-green-600' }
+                { icon: '📊', label: t('analytics'), color: 'from-blue-400 to-blue-600' },
+                { icon: '⚙️', label: t('settings'), color: 'from-gray-400 to-gray-600' },
+                { icon: '📚', label: t('learning'), color: 'from-purple-400 to-purple-600' },
+                { icon: '💬', label: t('support'), color: 'from-green-400 to-green-600' }
               ].map((action, index) => (
                 <motion.button
                   key={action.label}
@@ -431,11 +433,11 @@ const Dashboard = () => {
                   <div className="text-sm font-medium">{action.label}</div>
                 </motion.button>
               ))}
-            </motion.div>
-          </div>
-        </section>
+          </motion.div>
       </div>
-    </div>
+    </section>
+      </div >
+    </div >
   )
 }
 

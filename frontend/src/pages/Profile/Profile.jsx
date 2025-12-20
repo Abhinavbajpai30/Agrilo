@@ -54,25 +54,25 @@ const Profile = () => {
         // Build stats array with real data
         const realStats = [
           {
-            label: 'Total Farms',
+            label: t('totalFarms'),
             value: farmsResponse.status === 'fulfilled' ?
               (farmsResponse.value.data?.data?.farms?.length || 0) : 0,
             emoji: '🏡'
           },
           {
-            label: 'Diagnoses Made',
+            label: t('diagnosesMade'),
             value: diagnosesResponse.status === 'fulfilled' ?
               (diagnosesResponse.value.data?.data?.pagination?.totalDiagnoses || 0) : 0,
             emoji: '🩺'
           },
           {
-            label: 'Water Saved (L)',
+            label: t('waterSaved'),
             value: irrigationStatsResponse.status === 'fulfilled' ?
               Math.round(irrigationStatsResponse.value.data?.totalWaterUsed || 0) : 0,
             emoji: '💧'
           },
           {
-            label: 'Days Active',
+            label: t('daysActive'),
             value: daysActive,
             emoji: '📅'
           }
@@ -90,8 +90,8 @@ const Profile = () => {
           diagnosesResponse.value.data?.data?.pagination?.totalDiagnoses > 0) {
           realAchievements.push({
             id: 1,
-            title: 'First Diagnosis',
-            description: 'Completed your first crop health check',
+            title: t('firstDiagnosis'),
+            description: t('firstDiagnosisDesc'),
             icon: '🩺',
             earned: true
           });
@@ -102,8 +102,8 @@ const Profile = () => {
           irrigationStatsResponse.value.data?.totalWaterUsed > 500) {
           realAchievements.push({
             id: 2,
-            title: 'Water Saver',
-            description: 'Saved significant water through smart irrigation',
+            title: t('waterSaver'),
+            description: t('waterSaverDesc'),
             icon: '💧',
             earned: true
           });
@@ -114,8 +114,8 @@ const Profile = () => {
           farmsResponse.value.data?.data?.farms?.length > 0) {
           realAchievements.push({
             id: 3,
-            title: 'Farm Manager',
-            description: 'Successfully set up your first farm',
+            title: t('farmManager'),
+            description: t('farmManagerDesc'),
             icon: '🌱',
             earned: true
           });
@@ -125,8 +125,8 @@ const Profile = () => {
         if (daysActive > 30) {
           realAchievements.push({
             id: 4,
-            title: 'Dedicated Farmer',
-            description: 'Been using Agrilo for over a month',
+            title: t('dedicatedFarmer'),
+            description: t('dedicatedFarmerDesc'),
             icon: '📱',
             earned: true
           });
@@ -145,7 +145,7 @@ const Profile = () => {
     };
 
     fetchUserStats();
-  }, [user]);
+  }, [user, t]); // Add t as dependency to update translations when language changes
 
   const handleSave = async () => {
     try {
@@ -207,7 +207,7 @@ const Profile = () => {
             {t('profile')} 👨‍🌾
           </h1>
           <p className="text-gray-600">
-            Manage your farming profile and achievements
+            {t('manageProfile')}
           </p>
         </motion.div>
 
@@ -217,13 +217,13 @@ const Profile = () => {
             {/* Basic Info Card */}
             <motion.div variants={itemVariants} className="card">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-800">Personal Information</h2>
+                <h2 className="text-lg font-semibold text-gray-800">{t('personalInfo')}</h2>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="btn-ghost flex items-center space-x-2"
                 >
                   <PencilIcon className="w-4 h-4" />
-                  <span>{isEditing ? 'Cancel' : 'Edit'}</span>
+                  <span>{isEditing ? t('cancel') : t('edit')}</span>
                 </button>
               </div>
 
@@ -236,11 +236,11 @@ const Profile = () => {
                     {user?.personalInfo?.firstName} {user?.personalInfo?.lastName}
                   </h3>
                   <p className="text-gray-600 capitalize">
-                    {user?.farmingProfile?.experienceLevel || 'Intermediate'} Farmer
+                    {user?.farmingProfile?.experienceLevel || 'Intermediate'} {t('farmer')}
                   </p>
                   <div className="flex items-center space-x-2 mt-1">
                     <CheckBadgeIcon className="w-4 h-4 text-green-500" />
-                    <span className="text-sm text-green-600">Verified Account</span>
+                    <span className="text-sm text-green-600">{t('verifiedAccount')}</span>
                   </div>
                 </div>
               </div>
@@ -291,10 +291,10 @@ const Profile = () => {
                   </div>
                   <div className="flex space-x-3">
                     <button onClick={handleSave} className="btn-primary">
-                      Save Changes
+                      {t('saveChanges')}
                     </button>
                     <button onClick={() => setIsEditing(false)} className="btn-outline">
-                      Cancel
+                      {t('cancel')}
                     </button>
                   </div>
                 </div>
@@ -322,27 +322,27 @@ const Profile = () => {
 
             {/* Farming Profile */}
             <motion.div variants={itemVariants} className="card">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Farming Profile</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('farmingProfileHeader')}</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Experience Level</h4>
+                  <h4 className="font-medium text-gray-700 mb-1">{t('experienceLevel')}</h4>
                   <p className="text-gray-600 capitalize">{user?.farmingProfile?.experienceLevel}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Farming Type</h4>
+                  <h4 className="font-medium text-gray-700 mb-1">{t('farmingType')}</h4>
                   <p className="text-gray-600 capitalize">{user?.farmingProfile?.farmingType}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Primary Crops</h4>
+                  <h4 className="font-medium text-gray-700 mb-1">{t('primaryCrops')}</h4>
                   <div className="flex flex-wrap gap-1">
                     {user?.farmingProfile?.primaryCrops?.map((crop, index) => (
-                      <span key={index} className="badge badge-info capitalize">{crop}</span>
+                      <span key={index} className="badge badge-info capitalize">{t(crop.toLowerCase())}</span>
                     )) || <span className="text-gray-500">None specified</span>}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Total Farm Size</h4>
-                  <p className="text-gray-600">{user?.farmingProfile?.farmSize || 0} hectares</p>
+                  <h4 className="font-medium text-gray-700 mb-1">{t('totalFarmSize')}</h4>
+                  <p className="text-gray-600">{user?.farmingProfile?.farmSize || 0} {t('hectares')}</p>
                 </div>
               </div>
             </motion.div>
@@ -351,7 +351,7 @@ const Profile = () => {
             <motion.div variants={itemVariants} className="card">
               <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
                 <TrophyIcon className="w-5 h-5 text-yellow-500" />
-                <span>Achievements</span>
+                <span>{t('achievements')}</span>
               </h2>
               {isLoading ? (
                 <div className="grid md:grid-cols-2 gap-4">
@@ -374,8 +374,8 @@ const Profile = () => {
                     <div
                       key={achievement.id}
                       className={`p-4 rounded-2xl border-2 transition-all ${achievement.earned
-                          ? 'border-green-200 bg-green-50'
-                          : 'border-gray-200 bg-gray-50 opacity-60'
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-gray-200 bg-gray-50 opacity-60'
                         }`}
                     >
                       <div className="flex items-center space-x-3">
@@ -384,7 +384,7 @@ const Profile = () => {
                           <h4 className="font-semibold text-gray-800 text-sm">{achievement.title}</h4>
                           <p className="text-xs text-gray-600">{achievement.description}</p>
                           {achievement.earned && (
-                            <span className="text-xs text-green-600 font-semibold">✓ Earned</span>
+                            <span className="text-xs text-green-600 font-semibold">✓ {t('earned')}</span>
                           )}
                         </div>
                       </div>
@@ -394,7 +394,7 @@ const Profile = () => {
               ) : (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">🏆</div>
-                  <p className="text-gray-600">No achievements yet. Start farming to earn achievements!</p>
+                  <p className="text-gray-600">{t('noAchievements')}</p>
                 </div>
               )}
             </motion.div>
@@ -404,7 +404,7 @@ const Profile = () => {
           <div className="space-y-6">
             {/* Stats */}
             <motion.div variants={itemVariants}>
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Stats</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('yourStats')}</h2>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4].map((i) => (
@@ -430,10 +430,10 @@ const Profile = () => {
 
             {/* Progress */}
             <motion.div variants={itemVariants} className="card">
-              <h3 className="font-semibold text-gray-800 mb-4">Profile Completion</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">{t('profileCompletion')}</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Profile Progress</span>
+                  <span>{t('profileProgress')}</span>
                   <span>85%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -445,23 +445,23 @@ const Profile = () => {
                   />
                 </div>
                 <div className="text-xs text-gray-600">
-                  Add farm photos to reach 100%
+                  {t('addPhotosPrompt')}
                 </div>
               </div>
             </motion.div>
 
             {/* Quick Actions */}
             <motion.div variants={itemVariants}>
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('quickActions')}</h2>
               <div className="space-y-3">
                 <button className="w-full btn-primary">
-                  Update Farming Profile
+                  {t('updateProfile')}
                 </button>
                 <button className="w-full btn-outline">
-                  Change Password
+                  {t('changePassword')}
                 </button>
                 <button className="w-full btn-outline">
-                  Privacy Settings
+                  {t('privacySettings')}
                 </button>
               </div>
             </motion.div>

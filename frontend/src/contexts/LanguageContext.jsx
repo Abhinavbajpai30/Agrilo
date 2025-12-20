@@ -1,169 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { SUPPORTED_LANGUAGES, TRANSLATIONS } from '../utils/i18n'
 
 const LanguageContext = createContext()
-
-// Supported languages with their configurations
-const SUPPORTED_LANGUAGES = {
-  en: {
-    code: 'en',
-    name: 'English',
-    nativeName: 'English',
-    flag: '🇺🇸',
-    direction: 'ltr'
-  },
-  es: {
-    code: 'es',
-    name: 'Spanish',
-    nativeName: 'Español',
-    flag: '🇪🇸',
-    direction: 'ltr'
-  },
-  fr: {
-    code: 'fr',
-    name: 'French',
-    nativeName: 'Français',
-    flag: '🇫🇷',
-    direction: 'ltr'
-  },
-  hi: {
-    code: 'hi',
-    name: 'Hindi',
-    nativeName: 'हिन्दी',
-    flag: '🇮🇳',
-    direction: 'ltr'
-  }
-}
-
-// Translation strings - Basic set for demonstration
-const TRANSLATIONS = {
-  en: {
-    // Common
-    loading: 'Loading...',
-    error: 'Error',
-    success: 'Success',
-    cancel: 'Cancel',
-    confirm: 'Confirm',
-    save: 'Save',
-    delete: 'Delete',
-    edit: 'Edit',
-    add: 'Add',
-    search: 'Search',
-    next: 'Next',
-    back: 'Back',
-    continue: 'Continue',
-    skip: 'Skip',
-    retry: 'Retry',
-
-    // Navigation
-    home: 'Home',
-    dashboard: 'Dashboard',
-    farm: 'Farm',
-    diagnosis: 'Diagnosis',
-    irrigation: 'Irrigation',
-    planning: 'Planning',
-    profile: 'Profile',
-    settings: 'Settings',
-    logout: 'Logout',
-
-    // Auth
-    login: 'Login',
-    register: 'Register',
-    email: 'Email',
-    password: 'Password',
-    confirmPassword: 'Confirm Password',
-    forgotPassword: 'Forgot Password?',
-    phoneNumber: 'Phone Number',
-    firstName: 'First Name',
-    lastName: 'Last Name',
-
-    // Farm
-    myFarms: 'My Farms',
-    addFarm: 'Add Farm',
-    farmName: 'Farm Name',
-    farmSize: 'Farm Size',
-    location: 'Location',
-    crops: 'Crops',
-
-    // Common Actions
-    getStarted: 'Get Started',
-    learnMore: 'Learn More',
-    takePhoto: 'Take Photo',
-    uploadPhoto: 'Upload Photo',
-    getCurrentLocation: 'Get Current Location',
-    enableLocation: 'Enable Location',
-
-    // Status
-    online: 'Online',
-    offline: 'Offline',
-    syncing: 'Syncing...',
-    healthy: 'Healthy',
-    warning: 'Warning',
-    critical: 'Critical',
-
-    // Greetings
-    goodMorning: 'Good Morning',
-    goodAfternoon: 'Good Afternoon',
-    goodEvening: 'Good Evening',
-    welcome: 'Welcome',
-    welcomeBack: 'Welcome Back',
-
-    // App specific
-    appName: 'Agrilo',
-    tagline: 'AI-powered farming assistant',
-    cropHealth: 'Crop Health',
-    waterManagement: 'Water Management',
-    farmPlanning: 'Farm Planning',
-
-    // Placeholder for missing translations
-    translationMissing: 'Translation missing'
-  },
-
-  // Spanish translations (subset)
-  es: {
-    loading: 'Cargando...',
-    error: 'Error',
-    success: 'Éxito',
-    cancel: 'Cancelar',
-    confirm: 'Confirmar',
-    save: 'Guardar',
-    home: 'Inicio',
-    dashboard: 'Panel',
-    farm: 'Granja',
-    diagnosis: 'Diagnóstico',
-    irrigation: 'Irrigación',
-    planning: 'Planificación',
-    login: 'Iniciar Sesión',
-    register: 'Registrarse',
-    appName: 'Agrilo',
-    tagline: 'Asistente agrícola con IA',
-    welcome: 'Bienvenido',
-    translationMissing: 'Traducción faltante'
-  },
-
-  // French translations (subset)
-  fr: {
-    loading: 'Chargement...',
-    error: 'Erreur',
-    success: 'Succès',
-    cancel: 'Annuler',
-    confirm: 'Confirmer',
-    save: 'Sauvegarder',
-    home: 'Accueil',
-    dashboard: 'Tableau de Bord',
-    farm: 'Ferme',
-    diagnosis: 'Diagnostic',
-    irrigation: 'Irrigation',
-    planning: 'Planification',
-    login: 'Se Connecter',
-    register: 'S\'inscrire',
-    appName: 'Agrilo',
-    tagline: 'Assistant agricole IA',
-    welcome: 'Bienvenue',
-    translationMissing: 'Traduction manquante'
-  },
-
-  // Swahili translations removed
-}
 
 export const LanguageProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('en')
@@ -213,9 +51,13 @@ export const LanguageProvider = ({ children }) => {
     }
   }
 
+  const getNestedValue = (obj, path) => {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj)
+  }
+
   const translate = (key, fallback = null) => {
-    const translation = TRANSLATIONS[currentLanguage]?.[key] ||
-      TRANSLATIONS.en[key] ||
+    const translation = getNestedValue(TRANSLATIONS[currentLanguage], key) ||
+      getNestedValue(TRANSLATIONS.en, key) ||
       fallback ||
       key
 

@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  ClockIcon, 
-  FireIcon, 
-  CheckCircleIcon, 
+import {
+  ClockIcon,
+  FireIcon,
+  CheckCircleIcon,
   ChevronRightIcon,
-  StarIcon 
+  StarIcon
 } from '@heroicons/react/24/outline'
 import { apiService } from '../../services/api'
 import cacheService from '../../services/cacheService'
 import SuccessAnimation from '../Common/SuccessAnimation'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const UrgentTaskCard = ({ task, onComplete }) => {
+  const { t } = useLanguage()
   const [isCompleting, setIsCompleting] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -28,12 +30,12 @@ const UrgentTaskCard = ({ task, onComplete }) => {
             <CheckCircleIcon className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">All Caught Up!</h3>
-            <p className="text-gray-600">No urgent tasks for today</p>
+            <h3 className="text-lg font-semibold text-gray-800">{t('allCaughtUp')}</h3>
+            <p className="text-gray-600">{t('noUrgentTasks')}</p>
           </div>
         </div>
         <p className="text-sm text-gray-500">
-          Great job staying on top of your farm management! 🎉
+          {t('greatJob')} 🎉
         </p>
       </motion.div>
     )
@@ -42,13 +44,13 @@ const UrgentTaskCard = ({ task, onComplete }) => {
   const handleCompleteTask = async () => {
     try {
       setIsCompleting(true)
-      
+
       const response = await apiService.post(`/dashboard/task/${task.id}/complete`)
-      
+
       if (response.data?.status === 'success') {
         setIsCompleted(true)
         setShowSuccess(true)
-        
+
         // Invalidate dashboard cache to ensure fresh data
         try {
           await cacheService.invalidate('/dashboard/overview')
@@ -56,7 +58,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
         } catch (cacheError) {
           console.warn('Failed to invalidate cache:', cacheError)
         }
-        
+
         // Hide success animation after 3 seconds
         setTimeout(() => {
           setShowSuccess(false)
@@ -93,16 +95,15 @@ const UrgentTaskCard = ({ task, onComplete }) => {
       <motion.div
         layout
         initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: isCompleted ? 0.7 : 1, 
+        animate={{
+          opacity: isCompleted ? 0.7 : 1,
           y: 0,
           scale: isCompleted ? 0.98 : 1
         }}
-        className={`relative overflow-hidden rounded-2xl border-2 ${
-          task.priority === 'high' 
-            ? 'border-red-200 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50' 
+        className={`relative overflow-hidden rounded-2xl border-2 ${task.priority === 'high'
+            ? 'border-red-200 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50'
             : 'border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
-        }`}
+          }`}
       >
         {/* Animated Border Glow */}
         <motion.div
@@ -123,12 +124,12 @@ const UrgentTaskCard = ({ task, onComplete }) => {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: [0, 5, -5, 0],
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
-                  duration: 2, 
+                transition={{
+                  duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
@@ -136,11 +137,11 @@ const UrgentTaskCard = ({ task, onComplete }) => {
               >
                 <span className="text-xl">{task.icon}</span>
               </motion.div>
-              
+
               <div>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-xl font-bold text-gray-800">
-                    Today's Priority Task
+                    {t('todaysPriority')}
                   </h3>
                   {task.priority === 'high' && (
                     <motion.div
@@ -152,13 +153,13 @@ const UrgentTaskCard = ({ task, onComplete }) => {
                     </motion.div>
                   )}
                 </div>
-                <p className="text-gray-600">Complete this to stay on track</p>
+                <p className="text-gray-600">{t('completeToTrack')}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
               <motion.div
-                animate={{ 
+                animate={{
                   scale: [1, 1.1, 1],
                   opacity: [0.7, 1, 0.7]
                 }}
@@ -177,7 +178,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
               <span>{task.icon}</span>
               <span>{task.title}</span>
             </h4>
-            
+
             <p className="text-gray-600 mb-3">
               {task.description}
             </p>
@@ -188,10 +189,10 @@ const UrgentTaskCard = ({ task, onComplete }) => {
                   <ClockIcon className="w-4 h-4" />
                   <span>{task.estimatedTime}</span>
                 </div>
-                
+
                 <div className="flex items-center space-x-1 text-yellow-600">
                   <StarIcon className="w-4 h-4" />
-                  <span>{task.points} points</span>
+                  <span>{task.points} {t('points')}</span>
                 </div>
               </div>
 
@@ -207,13 +208,12 @@ const UrgentTaskCard = ({ task, onComplete }) => {
             disabled={isCompleting || isCompleted}
             whileHover={{ scale: isCompleted ? 1 : 1.02 }}
             whileTap={{ scale: isCompleted ? 1 : 0.98 }}
-            className={`w-full py-4 px-6 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
-              isCompleted 
-                ? 'bg-green-500 cursor-not-allowed' 
+            className={`w-full py-4 px-6 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${isCompleted
+                ? 'bg-green-500 cursor-not-allowed'
                 : isCompleting
-                ? 'bg-gray-400 cursor-not-allowed'
-                : `bg-gradient-to-r ${getPriorityColor(task.priority)} hover:shadow-xl`
-            }`}
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : `bg-gradient-to-r ${getPriorityColor(task.priority)} hover:shadow-xl`
+              }`}
           >
             <AnimatePresence mode="wait">
               {isCompleting ? (
@@ -229,7 +229,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                   />
-                  <span>Completing...</span>
+                  <span>{t('completing')}</span>
                 </motion.div>
               ) : isCompleted ? (
                 <motion.div
@@ -239,7 +239,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
                   className="flex items-center space-x-2"
                 >
                   <CheckCircleIcon className="w-5 h-5" />
-                  <span>Completed! Great Job! 🎉</span>
+                  <span>{t('completedJob')}</span>
                 </motion.div>
               ) : (
                 <motion.div
@@ -248,7 +248,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
                   animate={{ opacity: 1 }}
                   className="flex items-center space-x-2"
                 >
-                  <span>Complete Task</span>
+                  <span>{t('completeTask')}</span>
                   <motion.div
                     animate={{ x: [0, 5, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
@@ -266,13 +266,13 @@ const UrgentTaskCard = ({ task, onComplete }) => {
               {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={i}
-                  initial={{ 
+                  initial={{
                     y: 100,
                     x: Math.random() * 300,
                     scale: 0,
                     opacity: 1
                   }}
-                  animate={{ 
+                  animate={{
                     y: -50,
                     scale: [0, 1, 0],
                     opacity: [1, 1, 0]
@@ -295,7 +295,7 @@ const UrgentTaskCard = ({ task, onComplete }) => {
       <AnimatePresence>
         {showSuccess && (
           <SuccessAnimation
-            message="Task Completed Successfully! 🎉"
+            message={t('taskCompletedSuccess')}
             onComplete={() => setShowSuccess(false)}
           />
         )}

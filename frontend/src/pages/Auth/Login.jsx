@@ -30,7 +30,7 @@ const Login = () => {
 
     try {
       const result = await login(formData.phoneNumber, formData.password)
-      
+
       if (result.success) {
         navigate(from, { replace: true })
       } else {
@@ -77,7 +77,7 @@ const Login = () => {
               {t('welcomeBack')}
             </h1>
             <p className="text-gray-600">
-              Sign in to your farming assistant
+              {t('signInToAssistant')}
             </p>
           </div>
 
@@ -103,7 +103,7 @@ const Login = () => {
                 }))
                 if (error) setError('')
               }}
-              placeholder="Enter your phone number"
+              placeholder={t('enterPhone')}
               required
               error={error && error.includes('phone') ? error : null}
             />
@@ -118,7 +118,7 @@ const Login = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
+                  placeholder={t('enterPassword')}
                   className="input-primary pr-12"
                   required
                 />
@@ -159,7 +159,7 @@ const Login = () => {
             </div>
 
             <div className="text-center text-gray-600 text-sm">
-              Don't have an account?{' '}
+              {t('dontHaveAccount')}{' '}
               <Link
                 to="/register"
                 className="text-primary-600 hover:text-primary-700 font-semibold"

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRightIcon, StarIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const ToolNavigationCard = ({ tool }) => {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const handleClick = () => {
     navigate(tool.route)
@@ -13,21 +15,21 @@ const ToolNavigationCard = ({ tool }) => {
     switch (animationType) {
       case 'medical':
         return {
-          hover: { 
+          hover: {
             rotateY: [0, 15, 0],
             rotateX: [0, 5, 0]
           }
         }
       case 'calendar':
         return {
-          hover: { 
+          hover: {
             scale: [1, 1.05, 1.02],
             rotateZ: [0, 2, 0]
           }
         }
       case 'water':
         return {
-          hover: { 
+          hover: {
             y: [0, -5, -2],
             scale: [1, 1.03, 1.01]
           }
@@ -43,36 +45,36 @@ const ToolNavigationCard = ({ tool }) => {
     switch (animationType) {
       case 'medical':
         return {
-          animate: { 
+          animate: {
             rotateZ: [0, 5, -5, 0],
             scale: [1, 1.1, 1]
           },
-          transition: { 
-            duration: 3, 
+          transition: {
+            duration: 3,
             repeat: Infinity,
             ease: "easeInOut"
           }
         }
       case 'calendar':
         return {
-          animate: { 
+          animate: {
             rotateY: [0, 15, 0],
             scale: [1, 1.05, 1]
           },
-          transition: { 
-            duration: 4, 
+          transition: {
+            duration: 4,
             repeat: Infinity,
             ease: "easeInOut"
           }
         }
       case 'water':
         return {
-          animate: { 
+          animate: {
             y: [0, -3, 0],
             scale: [1, 1.1, 1]
           },
-          transition: { 
-            duration: 2, 
+          transition: {
+            duration: 2,
             repeat: Infinity,
             ease: "easeInOut"
           }
@@ -94,7 +96,7 @@ const ToolNavigationCard = ({ tool }) => {
     >
       {/* Background Card */}
       <div className={`bg-gradient-to-br ${tool.gradient} rounded-2xl p-6 h-full shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden`}>
-        
+
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[url('/patterns/dots.svg')] bg-repeat"></div>
@@ -103,26 +105,26 @@ const ToolNavigationCard = ({ tool }) => {
         {/* Floating Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            animate={{ 
+            animate={{
               x: [0, 50, 0],
               y: [0, -30, 0],
               rotate: [0, 180, 360]
             }}
-            transition={{ 
-              duration: 20, 
+            transition={{
+              duration: 20,
               repeat: Infinity,
               ease: "linear"
             }}
             className="absolute -top-8 -right-8 w-24 h-24 bg-white/10 rounded-full blur-xl"
           />
           <motion.div
-            animate={{ 
+            animate={{
               x: [0, -30, 0],
               y: [0, 20, 0],
               rotate: [0, -90, -180]
             }}
-            transition={{ 
-              duration: 15, 
+            transition={{
+              duration: 15,
               repeat: Infinity,
               ease: "linear"
             }}
@@ -139,7 +141,7 @@ const ToolNavigationCard = ({ tool }) => {
             >
               {tool.icon}
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -154,11 +156,11 @@ const ToolNavigationCard = ({ tool }) => {
             <h3 className="text-xl font-bold text-white mb-2 group-hover:text-white transition-colors duration-300">
               {tool.title}
             </h3>
-            
+
             <p className="text-white/90 text-sm font-medium mb-3">
               {tool.subtitle}
             </p>
-            
+
             <p className="text-white/80 text-sm leading-relaxed mb-4">
               {tool.description}
             </p>
@@ -174,7 +176,7 @@ const ToolNavigationCard = ({ tool }) => {
                   className="flex items-center justify-between text-xs"
                 >
                   <span className="text-white/70 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                    {t(`stats.${key.toLowerCase()}`, key)}
                   </span>
                   <span className="text-white/90 font-medium">
                     {value}
@@ -190,7 +192,7 @@ const ToolNavigationCard = ({ tool }) => {
               whileHover={{ x: 5 }}
               className="flex items-center space-x-2 text-white/90 group-hover:text-white transition-colors duration-300"
             >
-              <span className="text-sm font-medium">Open Tool</span>
+              <span className="text-sm font-medium">{t('openTool')}</span>
               <motion.div
                 animate={{ x: [0, 5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -209,7 +211,7 @@ const ToolNavigationCard = ({ tool }) => {
             >
               <div className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold flex items-center space-x-1 shadow-lg">
                 <StarIcon className="w-3 h-3" />
-                <span>TOP RATED</span>
+                <span>{t('topRated')}</span>
               </div>
             </motion.div>
           )}
@@ -236,12 +238,12 @@ const ToolNavigationCard = ({ tool }) => {
             {[...Array(6)].map((_, i) => (
               <motion.div
                 key={i}
-                initial={{ 
+                initial={{
                   y: -10,
                   x: 20 + i * 40,
                   opacity: 0.6
                 }}
-                animate={{ 
+                animate={{
                   y: 300,
                   opacity: [0.6, 0.3, 0]
                 }}
@@ -258,12 +260,12 @@ const ToolNavigationCard = ({ tool }) => {
 
         {tool.animation === 'medical' && (
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.2, 1],
               opacity: [0.2, 0.4, 0.2]
             }}
-            transition={{ 
-              duration: 3, 
+            transition={{
+              duration: 3,
               repeat: Infinity,
               ease: "easeInOut"
             }}

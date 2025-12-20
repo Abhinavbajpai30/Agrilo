@@ -1,18 +1,18 @@
 import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  HomeIcon, 
-  MapIcon, 
-  HeartIcon, 
-  BeakerIcon, 
+import {
+  HomeIcon,
+  MapIcon,
+  HeartIcon,
+  BeakerIcon,
   CalendarDaysIcon,
   Squares2X2Icon
 } from '@heroicons/react/24/outline'
-import { 
-  HomeIcon as HomeIconSolid, 
-  MapIcon as MapIconSolid, 
-  HeartIcon as HeartIconSolid, 
-  BeakerIcon as BeakerIconSolid, 
+import {
+  HomeIcon as HomeIconSolid,
+  MapIcon as MapIconSolid,
+  HeartIcon as HeartIconSolid,
+  BeakerIcon as BeakerIconSolid,
   CalendarDaysIcon as CalendarDaysIconSolid,
   Squares2X2Icon as Squares2X2IconSolid
 } from '@heroicons/react/24/solid'
@@ -50,7 +50,7 @@ const Navigation = () => {
     },
     {
       path: '/irrigation',
-      label: 'Water',
+      label: t('irrigation'),
       icon: BeakerIcon,
       activeIcon: BeakerIconSolid,
       color: 'sky',
@@ -81,7 +81,7 @@ const Navigation = () => {
             />
           ))}
         </div>
-        
+
         {/* Active indicator */}
         <motion.div
           className="h-1 bg-gradient-primary rounded-full mx-8 mb-2"

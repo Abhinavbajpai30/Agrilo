@@ -1,13 +1,16 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  SunIcon, 
-  CloudIcon, 
+import {
+  SunIcon,
+  CloudIcon,
   EyeDropperIcon,
-  BeakerIcon 
+  BeakerIcon
 } from '@heroicons/react/24/outline'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
+  const { t, currentLanguage } = useLanguage()
+
   if (isLoading) {
     return (
       <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
@@ -24,8 +27,8 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
       <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
         <div className="text-center text-white/80">
           <div className="text-4xl mb-2">🌐</div>
-          <h3 className="font-semibold mb-1">Weather Data Unavailable</h3>
-          <p className="text-sm text-white/60">Real weather data required</p>
+          <h3 className="font-semibold mb-1">{t('weatherUnavailable')}</h3>
+          <p className="text-sm text-white/60">{t('realDataRequired')}</p>
         </div>
       </div>
     )
@@ -56,14 +59,14 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
       {/* Background Animation */}
       <div className="absolute inset-0 opacity-20">
         <motion.div
-          animate={{ 
+          animate={{
             rotate: [0, 360],
             scale: [1, 1.1, 1]
           }}
-          transition={{ 
-            duration: 20, 
+          transition={{
+            duration: 20,
             repeat: Infinity,
-            ease: "linear" 
+            ease: "linear"
           }}
           className="w-32 h-32 bg-gradient-to-r from-white/30 to-transparent rounded-full blur-xl -top-8 -right-8 absolute"
         />
@@ -72,12 +75,12 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-white/90">Current Weather</h3>
+            <h3 className="text-lg font-semibold text-white/90">{t('currentWeather')}</h3>
             {weatherData?.location?.name && (
               <p className="text-sm text-white/70 mt-1">
                 📍 {weatherData.location.name}
                 {weatherData.location.country === 'Coordinates' && (
-                  <span className="text-xs text-white/50 ml-1">(GPS)</span>
+                  <span className="text-xs text-white/50 ml-1">({t('gps')})</span>
                 )}
               </p>
             )}
@@ -96,11 +99,11 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
           <div className="md:col-span-2">
             <div className="flex items-center space-x-4 mb-4">
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: current.description?.includes('sun') ? [0, 360] : 0,
                   y: current.description?.includes('rain') ? [0, -5, 0] : 0
                 }}
-                transition={{ 
+                transition={{
                   duration: current.description?.includes('sun') ? 10 : 2,
                   repeat: Infinity,
                   ease: "linear"
@@ -109,13 +112,13 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
               >
                 {getWeatherIcon(current.description)}
               </motion.div>
-              
+
               <div>
                 <div className={`text-4xl font-bold ${getTemperatureColor(current.temperature)}`}>
                   {current.temperature === '--' || current.temperature === 'Weather unavailable' ? '--' : `${current.temperature}°C`}
                 </div>
                 <div className="text-white/80 capitalize">
-                  {current.description === 'Weather unavailable' ? 'Weather data unavailable' : current.description}
+                  {current.description === 'Weather unavailable' ? t('weatherUnavailable') : current.description}
                 </div>
               </div>
             </div>
@@ -124,15 +127,15 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center space-x-2 text-white/70">
                 <EyeDropperIcon className="w-4 h-4" />
-                <span className="text-sm">Humidity: {current.humidity || '--'}%</span>
+                <span className="text-sm">{t('humidity')}: {current.humidity || '--'}%</span>
               </div>
               <div className="flex items-center space-x-2 text-white/70">
-                <span className="text-sm">Wind: {current.windSpeed || '--'} km/h</span>
+                <span className="text-sm">{t('wind')}: {current.windSpeed || '--'} km/h</span>
               </div>
               {current.uvIndex && (
                 <div className="flex items-center space-x-2 text-white/70">
                   <SunIcon className="w-4 h-4" />
-                  <span className="text-sm">UV Index: {current.uvIndex}</span>
+                  <span className="text-sm">{t('uvIndex')}: {current.uvIndex}</span>
                 </div>
               )}
             </div>
@@ -140,7 +143,7 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
 
           {/* Forecast */}
           <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">3-Day Forecast</h4>
+            <h4 className="text-sm font-medium text-white/80 mb-3">{t('forecast')}</h4>
             <div className="space-y-3">
               {forecast?.slice(0, 3).map((day, index) => (
                 <motion.div
@@ -153,7 +156,7 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">{getWeatherIcon(day.description)}</span>
                     <span className="text-sm text-white/80">
-                      {new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}
+                      {new Date(day.date).toLocaleDateString(currentLanguage, { weekday: 'short' })}
                     </span>
                   </div>
                   <div className="text-sm text-white/90 font-medium">
@@ -181,7 +184,7 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
                 ⚠️
               </motion.span>
               <span className="text-sm font-medium text-red-200">
-                Weather Alert
+                {t('weatherAlert')}
               </span>
             </div>
             <p className="text-xs text-red-200/90">
@@ -196,12 +199,12 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
             {[...Array(15)].map((_, i) => (
               <motion.div
                 key={i}
-                initial={{ 
-                  y: -10, 
+                initial={{
+                  y: -10,
                   x: Math.random() * 300,
-                  opacity: 0.7 
+                  opacity: 0.7
                 }}
-                animate={{ 
+                animate={{
                   y: 200,
                   opacity: [0.7, 0.3, 0]
                 }}
@@ -221,13 +224,13 @@ const WeatherWidget = memo(({ weatherData, isLoading = false }) => {
             {[...Array(8)].map((_, i) => (
               <motion.div
                 key={i}
-                initial={{ 
+                initial={{
                   scale: 0,
                   rotate: i * 45,
                   x: 150,
                   y: 80
                 }}
-                animate={{ 
+                animate={{
                   scale: [0, 1, 0],
                   opacity: [0, 0.3, 0]
                 }}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   SparklesIcon,
   TrendingUpIcon,
   CalendarIcon,
@@ -22,9 +22,11 @@ import {
 import apiService, { farmApi } from '../../services/api';
 import PlantGrowthAnimation from '../../components/Common/PlantGrowthAnimation';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const CropPlanning = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState('overview');
   const [selectedFarm, setSelectedFarm] = useState(null);
   const [recommendations, setRecommendations] = useState(null);
@@ -66,12 +68,12 @@ const CropPlanning = () => {
   useEffect(() => {
     const fetchFarms = async () => {
       if (!user) return; // Don't fetch if user is not authenticated
-      
+
       setFarmsLoading(true);
       try {
         const response = await farmApi.getFarms();
         console.log('Farm API response:', response.data);
-        
+
         if (response.data && response.data.data && response.data.data.farms && response.data.data.farms.length > 0) {
           console.log('Found farms:', response.data.data.farms.length);
           // Transform farm data to match the expected format
@@ -86,7 +88,7 @@ const CropPlanning = () => {
           }));
           console.log('Transformed farms:', transformedFarms);
           setFarms(transformedFarms);
-          
+
           // Auto-select the first farm if available
           if (transformedFarms.length > 0 && !selectedFarm) {
             setSelectedFarm(transformedFarms[0]);
@@ -123,14 +125,14 @@ const CropPlanning = () => {
 
   const fetchCropRecommendations = async () => {
     if (!selectedFarm) return;
-    
+
     setIsLoading(true);
     try {
       const response = await apiService.post('/planning/recommendations', {
         farmId: selectedFarm.id,
         ...userPreferences
       });
-              setRecommendations(response.data.message || response.data);
+      setRecommendations(response.data.message || response.data);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       // Use mock data for demo
@@ -197,7 +199,7 @@ const CropPlanning = () => {
           {
             risk: 'High Temperature',
             impact: 'Heat stress on crops',
-      priority: 'high',
+            priority: 'high',
             strategies: ['Use heat-tolerant varieties', 'Adjust planting dates'],
             affectedCrops: ['Tomato', 'Potato']
           }
@@ -251,7 +253,7 @@ const CropPlanning = () => {
           <div className="relative h-48 bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center overflow-hidden">
             {/* Use simple icon instead of animation to prevent re-renders */}
             <SproutIcon className="w-24 h-24 text-white opacity-80" />
-            
+
             <div className="absolute top-4 right-4">
               <div className={`${badge.color} text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1`}>
                 <span>{badge.icon}</span>
@@ -268,7 +270,7 @@ const CropPlanning = () => {
           {/* Crop Info */}
           <div className="p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-2">{crop.name}</h3>
-            
+
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <CoinsIcon className="w-4 h-4 text-yellow-500" />
@@ -302,7 +304,7 @@ const CropPlanning = () => {
                 className="absolute inset-0 bg-black/80 flex items-center justify-center p-6"
               >
                 <div className="text-center text-white">
-                  <h4 className="text-lg font-bold mb-3">Quick Preview</h4>
+                  <h4 className="text-lg font-bold mb-3">{t('planningPage.quickPreview')}</h4>
                   <div className="space-y-2 text-sm">
                     <div>Duration: {crop.growing.duration} days</div>
                     <div>Profit Margin: {crop.profitProjection.margin}%</div>
@@ -314,7 +316,7 @@ const CropPlanning = () => {
                     onClick={handleViewDetails}
                     className="mt-4 bg-white text-black px-4 py-2 rounded-full text-sm font-semibold"
                   >
-                    View Details
+                    {t('planningPage.viewDetails')}
                   </motion.button>
                 </div>
               </motion.div>
@@ -345,9 +347,9 @@ const CropPlanning = () => {
             >
               <SparklesIcon className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-bold text-gray-800">Climate-Smart Planner</h1>
+            <h1 className="text-4xl font-bold text-gray-800">{t('planningPage.title')}</h1>
           </div>
-          <p className="text-xl text-gray-600">AI-powered crop recommendations for changing climate conditions</p>
+          <p className="text-xl text-gray-600">{t('planningPage.subtitle')}</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -376,15 +378,15 @@ const CropPlanning = () => {
             // Empty state
             <div className="col-span-full text-center py-12">
               <div className="text-6xl mb-4">🌾</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Farms Available</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('irrigationPage.noFarms')}</h3>
               <p className="text-gray-600 mb-4">
-                You don't have any farms set up yet. Create a farm first to get crop recommendations.
+                {t('irrigationPage.noFarmsDesc')}
               </p>
-              <button 
+              <button
                 onClick={() => window.location.href = '/farm'}
                 className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"
               >
-                Go to Farm Management
+                {t('irrigationPage.goToFarm')}
               </button>
             </div>
           ) : (
@@ -433,7 +435,7 @@ const CropPlanning = () => {
                   className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-center py-3 rounded-xl font-semibold"
                   whileHover={{ from: 'from-emerald-500', to: 'to-green-500' }}
                 >
-                  Get Crop Recommendations
+                  {t('planningPage.getRecs')}
                 </motion.div>
               </motion.div>
             ))
@@ -455,15 +457,15 @@ const CropPlanning = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Tell us about your preferences</h1>
-          <p className="text-xl text-gray-600">This helps us provide better crop recommendations</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">{t('planningPage.preferences')}</h1>
+          <p className="text-xl text-gray-600">{t('planningPage.prefSubtitle')}</p>
         </motion.div>
 
         <div className="bg-white rounded-3xl p-8 shadow-xl border border-white/40">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Experience Level */}
             <div>
-              <label className="block text-lg font-semibold text-gray-800 mb-4">Experience Level</label>
+              <label className="block text-lg font-semibold text-gray-800 mb-4">{t('planningPage.experience')}</label>
               <div className="space-y-3">
                 {['beginner', 'intermediate', 'expert'].map((level) => (
                   <motion.div
@@ -471,11 +473,10 @@ const CropPlanning = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setUserPreferences(prev => ({ ...prev, experience: level }))}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      userPreferences.experience === level
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-300'
-                    }`}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${userPreferences.experience === level
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold capitalize">{level}</span>
@@ -490,7 +491,7 @@ const CropPlanning = () => {
 
             {/* Budget */}
             <div>
-              <label className="block text-lg font-semibold text-gray-800 mb-4">Budget Range</label>
+              <label className="block text-lg font-semibold text-gray-800 mb-4">{t('planningPage.budget')}</label>
               <div className="space-y-3">
                 {['low', 'medium', 'high'].map((budget) => (
                   <motion.div
@@ -498,11 +499,10 @@ const CropPlanning = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setUserPreferences(prev => ({ ...prev, budget }))}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      userPreferences.budget === budget
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-300'
-                    }`}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${userPreferences.budget === budget
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold capitalize">{budget}</span>
@@ -517,7 +517,7 @@ const CropPlanning = () => {
 
             {/* Market Access */}
             <div>
-              <label className="block text-lg font-semibold text-gray-800 mb-4">Market Access</label>
+              <label className="block text-lg font-semibold text-gray-800 mb-4">{t('planningPage.market')}</label>
               <div className="space-y-3">
                 {['local', 'regional', 'national', 'export'].map((market) => (
                   <motion.div
@@ -525,11 +525,10 @@ const CropPlanning = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setUserPreferences(prev => ({ ...prev, marketAccess: market }))}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      userPreferences.marketAccess === market
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-300'
-                    }`}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${userPreferences.marketAccess === market
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold capitalize">{market}</span>
@@ -544,7 +543,7 @@ const CropPlanning = () => {
 
             {/* Risk Tolerance */}
             <div>
-              <label className="block text-lg font-semibold text-gray-800 mb-4">Risk Tolerance</label>
+              <label className="block text-lg font-semibold text-gray-800 mb-4">{t('planningPage.risk')}</label>
               <div className="space-y-3">
                 {['low', 'medium', 'high'].map((risk) => (
                   <motion.div
@@ -552,11 +551,10 @@ const CropPlanning = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setUserPreferences(prev => ({ ...prev, riskTolerance: risk }))}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      userPreferences.riskTolerance === risk
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-300'
-                    }`}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${userPreferences.riskTolerance === risk
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold capitalize">{risk}</span>
@@ -577,7 +575,7 @@ const CropPlanning = () => {
               onClick={() => setCurrentStep('overview')}
               className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold"
             >
-              ← Back to Farms
+              {t('irrigationPage.backToFarms')}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -585,7 +583,7 @@ const CropPlanning = () => {
               onClick={() => setCurrentStep('recommendations')}
               className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold"
             >
-              Get Recommendations →
+              {t('planningPage.getRecsBtn')}
             </motion.button>
           </div>
         </div>
@@ -607,8 +605,8 @@ const CropPlanning = () => {
           className="flex items-center justify-between mb-8"
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Crop Recommendations for {selectedFarm?.name}</h1>
-            <p className="text-gray-600 mt-2">Climate-smart suggestions based on your preferences</p>
+            <h1 className="text-3xl font-bold text-gray-800">{t('planningPage.recsFor')} {selectedFarm?.name}</h1>
+            <p className="text-gray-600 mt-2">{t('planningPage.recsSubtitle')}</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -616,7 +614,7 @@ const CropPlanning = () => {
             onClick={() => setCurrentStep('preferences')}
             className="px-6 py-3 bg-white rounded-xl shadow-lg border border-gray-200 text-gray-700 font-semibold"
           >
-            ← Adjust Preferences
+            {t('planningPage.adjustPref')}
           </motion.button>
         </motion.div>
 
@@ -638,9 +636,9 @@ const CropPlanning = () => {
             >
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
                 <StarIcon className="w-6 h-6 text-yellow-500" />
-                <span>Top 3 Recommendations</span>
+                <span>{t('planningPage.topRecs')}</span>
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" key={recommendationsKey()}>
                 {recommendations?.topRecommendations?.map((crop, index) => (
                   <CropCard
@@ -666,9 +664,9 @@ const CropPlanning = () => {
               >
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
                   <CalendarIcon className="w-6 h-6 text-blue-500" />
-                  <span>Seasonal Planting Calendar</span>
+                  <span>{t('planningPage.seasonalCalendar')}</span>
                 </h2>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {Object.entries(recommendations.seasonalCalendar).map(([season, data]) => (
                     <motion.div
@@ -678,7 +676,7 @@ const CropPlanning = () => {
                     >
                       <h3 className="text-xl font-bold text-gray-800 mb-4 capitalize">{season}</h3>
                       <p className="text-gray-600 mb-4">{data.months?.join(', ')}</p>
-                      
+
                       <div className="space-y-3">
                         {data.recommendedCrops?.map((crop, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
@@ -709,9 +707,9 @@ const CropPlanning = () => {
               >
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
                   <ShieldCheckIcon className="w-6 h-6 text-orange-500" />
-                  <span>Climate Adaptation Strategies</span>
+                  <span>{t('planningPage.climateAdaptation')}</span>
                 </h2>
-                
+
                 <div className="space-y-4">
                   {recommendations.climateAdaptation.map((adaptation, index) => (
                     <motion.div
@@ -722,20 +720,18 @@ const CropPlanning = () => {
                       className="bg-white rounded-2xl p-6 shadow-lg border border-white/40"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className={`p-2 rounded-xl ${
-                          adaptation.priority === 'high' ? 'bg-red-100' : 'bg-yellow-100'
-                        }`}>
-                          <AlertTriangleIcon className={`w-6 h-6 ${
-                            adaptation.priority === 'high' ? 'text-red-500' : 'text-yellow-500'
-                          }`} />
+                        <div className={`p-2 rounded-xl ${adaptation.priority === 'high' ? 'bg-red-100' : 'bg-yellow-100'
+                          }`}>
+                          <AlertTriangleIcon className={`w-6 h-6 ${adaptation.priority === 'high' ? 'text-red-500' : 'text-yellow-500'
+                            }`} />
                         </div>
-                      <div className="flex-1">
+                        <div className="flex-1">
                           <h3 className="text-lg font-bold text-gray-800 mb-2">{adaptation.risk}</h3>
                           <p className="text-gray-600 mb-4">{adaptation.impact}</p>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <h4 className="font-semibold text-gray-800 mb-2">Strategies:</h4>
+                              <h4 className="font-semibold text-gray-800 mb-2">{t('planningPage.strategies')}:</h4>
                               <ul className="space-y-1">
                                 {adaptation.strategies?.map((strategy, i) => (
                                   <li key={i} className="text-sm text-gray-600 flex items-center space-x-2">
@@ -745,10 +741,10 @@ const CropPlanning = () => {
                                 ))}
                               </ul>
                             </div>
-                            
+
                             {adaptation.affectedCrops && adaptation.affectedCrops.length > 0 && (
                               <div>
-                                <h4 className="font-semibold text-gray-800 mb-2">Affected Crops:</h4>
+                                <h4 className="font-semibold text-gray-800 mb-2">{t('planningPage.affectedCrops')}:</h4>
                                 <div className="flex flex-wrap gap-2">
                                   {adaptation.affectedCrops.map((crop, i) => (
                                     <span key={i} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-sm">
@@ -797,7 +793,7 @@ const CropPlanning = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Basic Info */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Basic Information</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('planningPage.basicInfo')}</h3>
                         <div className="space-y-3">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Scientific Name:</span>
@@ -882,10 +878,9 @@ const CropPlanning = () => {
                           {Object.entries(selectedCrop.riskFactors || {}).map(([risk, level]) => (
                             <div key={risk} className="bg-gray-50 p-3 rounded-lg">
                               <div className="text-sm font-medium text-gray-800 capitalize">{risk}</div>
-                              <div className={`text-xs font-semibold mt-1 ${
-                                level === 'high' || level === 'very_high' ? 'text-red-600' :
+                              <div className={`text-xs font-semibold mt-1 ${level === 'high' || level === 'very_high' ? 'text-red-600' :
                                 level === 'medium' ? 'text-yellow-600' : 'text-green-600'
-                              }`}>
+                                }`}>
                                 {level.replace('_', ' ')}
                               </div>
                             </div>

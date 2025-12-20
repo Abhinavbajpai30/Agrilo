@@ -20,28 +20,28 @@ const Home = () => {
     {
       icon: HeartIcon,
       title: t('cropHealth'),
-      description: 'AI-powered crop disease detection and treatment recommendations',
+      description: t('cropHealthDesc'),
       color: 'orange',
       emoji: '🩺'
     },
     {
       icon: BeakerIcon,
       title: t('waterManagement'),
-      description: 'Smart irrigation planning based on weather and soil conditions',
+      description: t('waterManagementDesc'),
       color: 'sky',
       emoji: '💧'
     },
     {
       icon: CalendarDaysIcon,
       title: t('farmPlanning'),
-      description: 'Seasonal crop rotation and harvest planning assistance',
+      description: t('farmPlanningDesc'),
       color: 'primary',
       emoji: '📅'
     },
     {
       icon: MapIcon,
-      title: 'Farm Management',
-      description: 'GPS-based field mapping and boundary management',
+      title: t('farmManagement'),
+      description: t('farmManagementDesc'),
       color: 'earth',
       emoji: '🗺️'
     }
@@ -89,17 +89,16 @@ const Home = () => {
               animate={{ scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="text-gradient-primary">Smart Farming</span>
+              <span className="text-gradient-primary">{t('homeTitle1')}</span>
               <br />
-              <span className="text-gray-800">Made Simple</span>
+              <span className="text-gray-800">{t('homeTitle2')}</span>
             </motion.h1>
 
             <motion.p
               className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed"
               variants={itemVariants}
             >
-              {t('tagline')} - Empowering smallholder farmers with AI-powered insights,
-              crop health monitoring, and smart irrigation management.
+              {t('homeSubtitle')}
             </motion.p>
           </motion.div>
 
@@ -112,7 +111,7 @@ const Home = () => {
               to={isAuthenticated ? '/dashboard' : '/register'}
               className="btn-primary text-lg px-8 py-4 group"
             >
-              <span>{isAuthenticated ? 'Go to Dashboard' : t('getStarted')}</span>
+              <span>{isAuthenticated ? t('goToDashboard') : t('getStarted')}</span>
               <motion.div
                 className="ml-2"
                 animate={{ x: [0, 5, 0] }}
@@ -172,10 +171,10 @@ const Home = () => {
         >
           <motion.div variants={itemVariants} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Everything You Need to Farm Smarter
+              {t('featuresTitle')}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive tools designed specifically for smallholder farmers
+              {t('featuresSubtitle')}
             </p>
           </motion.div>
 
@@ -228,10 +227,10 @@ const Home = () => {
         >
           <motion.div variants={itemVariants}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              Ready to Transform Your Farming?
+              {t('ctaTitle')}
             </h2>
             <p className="text-lg mb-8 text-white/90">
-              Join Agrilo today and experience the future of agriculture
+              {t('ctaSubtitle')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -239,7 +238,7 @@ const Home = () => {
                 to={isAuthenticated ? '/dashboard' : '/register'}
                 className="bg-white text-emerald-600 font-semibold py-4 px-8 rounded-2xl hover:bg-gray-50 transition-colors text-lg shadow-lg"
               >
-                {isAuthenticated ? 'Open Dashboard' : 'Start Free Today'}
+                {isAuthenticated ? t('openDashboard') : t('startFreeToday')}
               </Link>
 
               {!isAuthenticated && (
@@ -247,7 +246,7 @@ const Home = () => {
                   to="/login"
                   className="border-2 border-white text-white font-semibold py-4 px-8 rounded-2xl hover:bg-white/10 transition-colors text-lg"
                 >
-                  Already a Member?
+                  {t('alreadyMember')}
                 </Link>
               )}
             </div>

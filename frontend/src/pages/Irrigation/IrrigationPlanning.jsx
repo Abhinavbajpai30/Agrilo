@@ -22,9 +22,11 @@ import {
 import apiService, { farmApi } from '../../services/api';
 import WaterDropAnimation from '../../components/Common/WaterDropAnimation';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const IrrigationPlanning = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState('overview');
   const [selectedFarm, setSelectedFarm] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
@@ -239,9 +241,9 @@ const IrrigationPlanning = () => {
             >
               <DropletIcon className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-bold text-gray-800">Smart Irrigation Advisor</h1>
+            <h1 className="text-4xl font-bold text-gray-800">{t('irrigationPage.title')}</h1>
           </div>
-          <p className="text-xl text-gray-600">AI-powered irrigation recommendations for optimal crop health</p>
+          <p className="text-xl text-gray-600">{t('irrigationPage.subtitle')}</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -249,21 +251,21 @@ const IrrigationPlanning = () => {
             // Loading state
             <div className="col-span-full text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading farms...</p>
+              <p className="text-gray-600">{t('irrigationPage.loadingFarms')}</p>
             </div>
           ) : farms.length === 0 ? (
             // Empty state
             <div className="col-span-full text-center py-12">
               <div className="text-6xl mb-4">🌾</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Farms Available</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('irrigationPage.noFarms')}</h3>
               <p className="text-gray-600 mb-4">
-                You don't have any farms set up yet. Create a farm first to get irrigation recommendations.
+                {t('irrigationPage.noFarmsDesc')}
               </p>
               <button
                 onClick={() => window.location.href = '/farm'}
                 className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
               >
-                Go to Farm Management
+                {t('irrigationPage.goToFarm')}
               </button>
             </div>
           ) : (
@@ -306,7 +308,7 @@ const IrrigationPlanning = () => {
                   className="mt-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 rounded-xl font-semibold"
                   whileHover={{ from: 'from-cyan-500', to: 'to-blue-500' }}
                 >
-                  Check Irrigation Status
+                  {t('irrigationPage.checkStatus')}
                 </motion.div>
               </motion.div>
             ))
@@ -344,7 +346,7 @@ const IrrigationPlanning = () => {
             onClick={() => setCurrentStep('overview')}
             className="px-6 py-3 bg-white rounded-xl shadow-lg border border-gray-200 text-gray-700 font-semibold"
           >
-            ← Back to Farms
+            {t('irrigationPage.backToFarms')}
           </motion.button>
         </motion.div>
 
@@ -367,7 +369,7 @@ const IrrigationPlanning = () => {
               >
                 <div className="flex items-center space-x-3 mb-3">
                   <AlertTriangleIcon className="w-6 h-6" />
-                  <h3 className="text-lg font-semibold">Limited Data Available</h3>
+                  <h3 className="text-lg font-semibold">{t('irrigationPage.limitedData')}</h3>
                 </div>
                 <div className="space-y-2">
                   {recommendation.metadata.warnings.map((warning, index) => (
@@ -375,12 +377,12 @@ const IrrigationPlanning = () => {
                   ))}
                 </div>
                 <div className="mt-4 flex items-center space-x-4">
-                  <span className="text-sm text-white/80">Data Reliability:</span>
+                  <span className="text-sm text-white/80">{t('irrigationPage.dataReliability')}:</span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDataReliabilityColor(recommendation?.metadata?.dataReliability || 'unknown')
                     }`}>
                     {recommendation?.metadata?.dataReliability === 'high' ? 'High' :
                       recommendation?.metadata?.dataReliability === 'limited' ? 'Limited' :
-                        recommendation?.metadata?.dataReliability === 'low' ? 'Low' : 'Unknown'}
+                        recommendation?.metadata?.dataReliability === 'low' ? 'Low' : t('irrigationPage.unknown')}
                   </span>
                 </div>
               </motion.div>
@@ -400,11 +402,11 @@ const IrrigationPlanning = () => {
                       {getStatusIcon(recommendation?.recommendation?.status)}
                       <div>
                         <h2 className="text-2xl font-bold">
-                          {recommendation?.recommendation?.status === 'needed' ? 'Irrigation Needed' :
-                            recommendation?.recommendation?.status === 'urgent' ? 'Urgent Irrigation' :
-                              recommendation?.recommendation?.status === 'skip' ? 'Skip Irrigation' :
-                                recommendation?.recommendation?.status === 'optimal' ? 'Optimal Moisture' :
-                                  'Monitor Status'}
+                          {recommendation?.recommendation?.status === 'needed' ? t('irrigationPage.status.needed') :
+                            recommendation?.recommendation?.status === 'urgent' ? t('irrigationPage.status.urgent') :
+                              recommendation?.recommendation?.status === 'skip' ? t('irrigationPage.status.skip') :
+                                recommendation?.recommendation?.status === 'optimal' ? t('irrigationPage.status.optimal') :
+                                  t('irrigationPage.status.monitor')}
                         </h2>
                         <p className="text-white/80">Priority: {recommendation?.recommendation?.priority}</p>
                         {/* Data Source Indicators */}
@@ -423,7 +425,7 @@ const IrrigationPlanning = () => {
                         className="text-center"
                       >
                         <div className="text-3xl font-bold">{recommendation?.recommendation?.amount}L</div>
-                        <div className="text-white/80">Recommended</div>
+                        <div className="text-white/80">{t('irrigationPage.recommended')}</div>
                       </motion.div>
                     )}
                   </div>
@@ -436,7 +438,7 @@ const IrrigationPlanning = () => {
                     <div className="bg-white/20 rounded-2xl p-4 mb-4">
                       <h3 className="font-semibold mb-3 flex items-center space-x-2">
                         <ClockIcon className="w-5 h-5" />
-                        <span>Optimal Irrigation Times</span>
+                        <span>{t('irrigationPage.optimalTimes')}</span>
                       </h3>
                       <div className="space-y-2">
                         {recommendation.recommendation.optimalTimes.recommended.map((time, index) => (
@@ -453,7 +455,7 @@ const IrrigationPlanning = () => {
                     <div className="bg-red-500/20 rounded-2xl p-4 mb-4">
                       <h3 className="font-semibold mb-3 flex items-center space-x-2 text-red-100">
                         <XCircleIcon className="w-5 h-5" />
-                        <span>Avoid These Times</span>
+                        <span>{t('irrigationPage.avoidTimes')}</span>
                       </h3>
                       <div className="space-y-2">
                         {recommendation.recommendation.optimalTimes.avoid.map((time, index) => (
@@ -470,7 +472,7 @@ const IrrigationPlanning = () => {
                     <div className="bg-green-500/20 rounded-2xl p-4 mb-4">
                       <h3 className="font-semibold mb-3 flex items-center space-x-2 text-green-100">
                         <ZapIcon className="w-5 h-5" />
-                        <span>Water Conservation Tips</span>
+                        <span>{t('irrigationPage.conservationTips')}</span>
                       </h3>
                       <div className="space-y-3">
                         {recommendation.recommendation.conservationTips.map((tip, index) => (
@@ -491,7 +493,7 @@ const IrrigationPlanning = () => {
                     <div className="bg-blue-500/20 rounded-2xl p-4 mb-4">
                       <h3 className="font-semibold mb-3 flex items-center space-x-2 text-blue-100">
                         <LeafIcon className="w-5 h-5" />
-                        <span>Environmental Impact</span>
+                        <span>{t('irrigationPage.impact')}</span>
                       </h3>
                       <div className="grid grid-cols-2 gap-4 text-blue-100">
                         <div>
@@ -511,7 +513,7 @@ const IrrigationPlanning = () => {
                     <div className="bg-yellow-500/20 rounded-2xl p-4">
                       <h3 className="font-semibold mb-3 flex items-center space-x-2 text-yellow-100">
                         <DollarSignIcon className="w-5 h-5" />
-                        <span>Cost Estimate</span>
+                        <span>{t('irrigationPage.cost')}</span>
                       </h3>
                       <div className="grid grid-cols-3 gap-4 text-yellow-100">
                         <div className="text-center">
@@ -536,18 +538,18 @@ const IrrigationPlanning = () => {
                   <div className="flex items-center space-x-4 mb-6">
                     <AlertTriangleIcon className="w-8 h-8" />
                     <div>
-                      <h2 className="text-2xl font-bold">Irrigation Data Unavailable</h2>
-                      <p className="text-white/80">Real weather and soil data required</p>
+                      <h2 className="text-2xl font-bold">{t('irrigationPage.unavailable')}</h2>
+                      <p className="text-white/80">{t('irrigationPage.realDataRequired')}</p>
                     </div>
                   </div>
                   <p className="text-lg text-white/90 mb-6">
-                    Unable to provide irrigation recommendations due to insufficient real data for this location.
-                    Weather and soil data from OpenEPI is required for accurate calculations.
+                    {t('irrigationPage.unavailableDesc')}
+
                   </p>
                   <div className="bg-white/20 rounded-2xl p-4">
                     <h3 className="font-semibold mb-3 flex items-center space-x-2">
                       <AlertTriangleIcon className="w-5 h-5" />
-                      <span>Data Requirements</span>
+                      <span>{t('irrigationPage.requirements')}</span>
                     </h3>
                     <div className="space-y-2 text-white/90">
                       <div>• Real-time weather data from OpenEPI</div>
@@ -568,7 +570,7 @@ const IrrigationPlanning = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
                     <BeakerIcon className="w-6 h-6 text-blue-500" />
-                    <span>Soil Moisture Analysis</span>
+                    <span>{t('irrigationPage.soilMoisture')}</span>
                   </h3>
                 </div>
 
@@ -618,11 +620,11 @@ const IrrigationPlanning = () => {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Current:</span>
+                      <span className="text-gray-600">{t('irrigationPage.current')}:</span>
                       <span className="font-semibold">{recommendation?.waterBalance?.currentMoisture || 0}mm</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Capacity:</span>
+                      <span className="text-gray-600">{t('irrigationPage.capacity')}:</span>
                       <span className="font-semibold">{recommendation?.waterBalance?.totalCapacity || 0}mm</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -649,7 +651,7 @@ const IrrigationPlanning = () => {
                   >
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center space-x-2">
                       <ThermometerIcon className="w-5 h-5 text-orange-500" />
-                      <span>Evapotranspiration Data</span>
+                      <span>{t('irrigationPage.evapo')}</span>
                     </h3>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
@@ -679,7 +681,7 @@ const IrrigationPlanning = () => {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
                         <BeakerIcon className="w-5 h-5 text-brown-500" />
-                        <span>Soil Properties</span>
+                        <span>{t('irrigationPage.soilProps')}</span>
                       </h3>
                       {getDataSourceBadge(recommendation.soil.source)}
                     </div>
@@ -716,7 +718,7 @@ const IrrigationPlanning = () => {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
                         <BeakerIcon className="w-5 h-5 text-brown-500" />
-                        <span>Soil Properties</span>
+                        <span>{t('irrigationPage.soilProps')}</span>
                       </h3>
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                         Unavailable
@@ -745,7 +747,7 @@ const IrrigationPlanning = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
                       <SunIcon className="w-6 h-6 text-yellow-500" />
-                      <span>Current Weather</span>
+                      <span>{t('irrigationPage.weather')}</span>
                     </h3>
                     {getDataSourceBadge(weatherForecast.source)}
                   </div>
@@ -796,7 +798,7 @@ const IrrigationPlanning = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
                       <WindIcon className="w-6 h-6 text-teal-500" />
-                      <span>Air Quality</span>
+                      <span>{t('irrigationPage.airQuality')}</span>
                     </h3>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${recommendation.airQuality.aqi < 50 ? 'bg-green-100 text-green-800' :
                       recommendation.airQuality.aqi < 100 ? 'bg-yellow-100 text-yellow-800' :

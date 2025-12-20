@@ -39,27 +39,27 @@ const Register = () => {
   const navigate = useNavigate()
 
   const experienceLevels = [
-    { value: 'beginner', label: 'Beginner (0-2 years)', emoji: '🌱' },
-    { value: 'intermediate', label: 'Intermediate (3-10 years)', emoji: '🌿' },
-    { value: 'experienced', label: 'Experienced (10+ years)', emoji: '🌳' }
+    { value: 'beginner', label: t('beginner') || 'Beginner (0-2 years)', emoji: '🌱' },
+    { value: 'intermediate', label: t('intermediate') || 'Intermediate (3-10 years)', emoji: '🌿' },
+    { value: 'experienced', label: t('experienced') || 'Experienced (10+ years)', emoji: '🌳' }
   ]
 
   const farmingTypes = [
-    { value: 'subsistence', label: 'Subsistence Farming', emoji: '🏠' },
-    { value: 'commercial', label: 'Commercial Farming', emoji: '🏭' },
-    { value: 'organic', label: 'Organic Farming', emoji: '🌿' },
-    { value: 'mixed', label: 'Mixed Farming', emoji: '🔄' }
+    { value: 'subsistence', label: t('subsistence') || 'Subsistence Farming', emoji: '🏠' },
+    { value: 'commercial', label: t('commercial') || 'Commercial Farming', emoji: '🏭' },
+    { value: 'organic', label: t('organic') || 'Organic Farming', emoji: '🌿' },
+    { value: 'mixed', label: t('mixed') || 'Mixed Farming', emoji: '🔄' }
   ]
 
   const cropOptions = [
-    { value: 'maize', label: 'Maize/Corn', emoji: '🌽' },
-    { value: 'rice', label: 'Rice', emoji: '🌾' },
-    { value: 'wheat', label: 'Wheat', emoji: '🌾' },
-    { value: 'tomatoes', label: 'Tomatoes', emoji: '🍅' },
-    { value: 'potatoes', label: 'Potatoes', emoji: '🥔' },
-    { value: 'beans', label: 'Beans', emoji: '🫘' },
-    { value: 'cassava', label: 'Cassava', emoji: '🍠' },
-    { value: 'sorghum', label: 'Sorghum', emoji: '🌾' }
+    { value: 'maize', label: t('maize'), emoji: '🌽' },
+    { value: 'rice', label: t('rice'), emoji: '🌾' },
+    { value: 'wheat', label: t('wheat'), emoji: '🌾' },
+    { value: 'tomatoes', label: t('tomatoes'), emoji: '🍅' },
+    { value: 'potatoes', label: t('potatoes'), emoji: '🥔' },
+    { value: 'beans', label: t('beans'), emoji: '🫘' },
+    { value: 'cassava', label: t('cassava'), emoji: '🍠' },
+    { value: 'sorghum', label: t('sorghum'), emoji: '🌾' }
   ]
 
   const handleSubmit = async (e) => {
@@ -72,7 +72,7 @@ const Register = () => {
 
     // Validate final step
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('passwordsNoMatch'))
       return
     }
 
@@ -125,11 +125,11 @@ const Register = () => {
         navigate('/onboarding')
       } else {
         console.error('Registration failed:', result.error)
-        setError(result.error || 'Registration failed. Please try again.')
+        setError(result.error || t('registrationFailed'))
       }
     } catch (err) {
       console.error('Registration error:', err)
-      setError('Registration failed. Please try again.')
+      setError(t('registrationFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -207,7 +207,7 @@ const Register = () => {
         }
       } catch (error) {
         console.error('Error getting location:', error)
-        setError('Unable to get your location. Please enter manually.')
+        setError(t('getLocationError') || 'Unable to get your location. Please enter manually.')
       } finally {
         setIsLocationLoading(false)
       }
@@ -245,10 +245,10 @@ const Register = () => {
               <span className="text-2xl">🌾</span>
             </motion.div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              Join Agrilo
+              {t('joinAgrilo')}
             </h1>
             <p className="text-gray-600">
-              Create your farming assistant account
+              {t('createAccountTitle')}
             </p>
           </div>
 
@@ -287,7 +287,7 @@ const Register = () => {
                 exit="exit"
                 className="space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 mb-4">Personal Information</h3>
+                <h3 className="font-semibold text-gray-800 mb-4">{t('personalInfo')}</h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="input-group">
@@ -323,7 +323,7 @@ const Register = () => {
                     }))
                     if (error) setError('')
                   }}
-                  placeholder="Enter your phone number"
+                  placeholder={t('enterPhone')}
                   required
                   error={error && error.includes('phone') ? error : null}
                 />
@@ -351,10 +351,10 @@ const Register = () => {
                 exit="exit"
                 className="space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 mb-4">Farming Profile</h3>
+                <h3 className="font-semibold text-gray-800 mb-4">{t('farmingProfileHeader')}</h3>
 
                 <div className="input-group">
-                  <label className="input-label">Experience Level</label>
+                  <label className="input-label">{t('experienceLevel')}</label>
                   <div className="space-y-2">
                     {experienceLevels.map((level) => (
                       <label key={level.value} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-2xl hover:bg-gray-50 cursor-pointer">
@@ -374,7 +374,7 @@ const Register = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Farming Type</label>
+                  <label className="input-label">{t('farmingType')}</label>
                   <div className="grid grid-cols-2 gap-2">
                     {farmingTypes.map((type) => (
                       <label key={type.value} className="flex items-center space-x-2 p-3 border border-gray-200 rounded-2xl hover:bg-gray-50 cursor-pointer">
@@ -394,7 +394,7 @@ const Register = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Primary Crops (Select all that apply)</label>
+                  <label className="input-label">{t('primaryCrops')}</label>
                   <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                     {cropOptions.map((crop) => (
                       <label key={crop.value} className="flex items-center space-x-2 p-2 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer">
@@ -414,7 +414,7 @@ const Register = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Farm Size (hectares)</label>
+                  <label className="input-label">{t('farmSizeHectares')}</label>
                   <input
                     type="number"
                     name="farmSize"
@@ -438,11 +438,11 @@ const Register = () => {
                 exit="exit"
                 className="space-y-4"
               >
-                <h3 className="font-semibold text-gray-800 mb-4">Location & Security</h3>
+                <h3 className="font-semibold text-gray-800 mb-4">{t('locationSecurity')}</h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="input-group">
-                    <label className="input-label">Country</label>
+                    <label className="input-label">{t('country')}</label>
                     <input
                       type="text"
                       name="country"
@@ -453,7 +453,7 @@ const Register = () => {
                     />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Region/State</label>
+                    <label className="input-label">{t('regionState')}</label>
                     <input
                       type="text"
                       name="region"
@@ -480,17 +480,17 @@ const Register = () => {
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                           className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
                         />
-                        <span>Getting Location...</span>
+                        <span>{t('gettingLocation')}</span>
                       </>
                     ) : (
                       <>
                         <MapPinIcon className="w-4 h-4" />
-                        <span>Get Location</span>
+                        <span>{t('getLocation')}</span>
                       </>
                     )}
                   </button>
                   {formData.coordinates && !isLocationLoading && (
-                    <span className="text-xs text-green-600">✓ Location set</span>
+                    <span className="text-xs text-green-600">✓ {t('locationSet')}</span>
                   )}
                 </div>
 
@@ -551,14 +551,14 @@ const Register = () => {
                 type="submit"
                 className="flex-1 btn-primary"
               >
-                {step === 3 ? 'Create Account' : t('next')}
+                {step === 3 ? t('createAccount') : t('next')}
               </motion.button>
             </div>
           </form>
 
           {/* Login Link */}
           <div className="mt-6 text-center text-gray-600 text-sm">
-            Already have an account?{' '}
+            {t('alreadyHaveAccount')}{' '}
             <Link
               to="/login"
               className="text-primary-600 hover:text-primary-700 font-semibold"

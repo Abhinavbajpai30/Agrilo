@@ -13,23 +13,20 @@ import {
   StarIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import apiService from '../../services/api'
 
 const CropDiagnosis = () => {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
+  const { t } = useLanguage()
 
 
   const [currentStep, setCurrentStep] = useState('method') // method, camera, upload, analysis, results
-  const [selectedMethod, setSelectedMethod] = useState('camera')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [capturedImages, setCapturedImages] = useState([])
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [diagnosisResults, setDiagnosisResults] = useState(null)
-  const [uploadId, setUploadId] = useState(null)
   const [error, setError] = useState(null)
   const [showCelebration, setShowCelebration] = useState(false)
-  const [currentSymptomStep, setCurrentSymptomStep] = useState(0)
-  const [symptomResponses, setSymptomResponses] = useState({})
 
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
@@ -38,7 +35,7 @@ const CropDiagnosis = () => {
   const [isCameraReady, setIsCameraReady] = useState(false)
 
   // Diagnosis statistics for gamification
-  const [userStats, setUserStats] = useState({
+  const [userStats] = useState({
     totalDiagnoses: user?.appUsage?.totalDiagnoses || 0,
     streak: 0,
     accuracy: 92,
@@ -110,7 +107,7 @@ const CropDiagnosis = () => {
         }
       }
     } catch (err) {
-      setError('Camera access denied. Please allow camera permissions and try again.')
+      setError(t('doctor.camera.accessDenied'))
       console.error('Camera error:', err)
     }
   }
@@ -149,11 +146,10 @@ const CropDiagnosis = () => {
   const uploadImages = async () => {
     try {
       setCurrentStep('analysis')
-      setIsAnalyzing(true)
       setAnalysisProgress(0)
 
       const formData = new FormData()
-      capturedImages.forEach((img, index) => {
+      capturedImages.forEach((img) => {
         formData.append('images', img.file)
       })
 
@@ -183,7 +179,6 @@ const CropDiagnosis = () => {
 
       if (uploadResponse.data?.status === 'success') {
         const uploadId = uploadResponse.data.message?.uploadId
-        setUploadId(uploadId)
 
         // Analyze the uploaded images
         const analysisPayload = {
@@ -221,41 +216,51 @@ const CropDiagnosis = () => {
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
       setCurrentStep('camera')
-    } finally {
-      setIsAnalyzing(false)
     }
   }
 
   const diagnosisMethods = [
     {
       id: 'camera',
-      title: 'AI Crop Doctor',
-      subtitle: 'Instant Photo Diagnosis',
-      description: 'Take a photo for instant AI-powered plant health analysis',
+      title: t('doctor.methods.camera.title'),
+      subtitle: t('doctor.methods.camera.subtitle'),
+      description: t('doctor.methods.camera.description'),
       icon: CameraIcon,
       emoji: '📸',
       gradient: 'from-teal-400 via-cyan-500 to-blue-500',
-      features: ['Real-time analysis', 'Disease detection', 'Treatment advice']
+      features: [
+        t('doctor.methods.camera.features.realtime'),
+        t('doctor.methods.camera.features.detection'),
+        t('doctor.methods.camera.features.treatment')
+      ]
     },
     {
       id: 'upload',
-      title: 'Gallery Upload',
-      subtitle: 'Analyze Existing Photos',
-      description: 'Upload photos from your gallery for analysis',
+      title: t('doctor.methods.upload.title'),
+      subtitle: t('doctor.methods.upload.subtitle'),
+      description: t('doctor.methods.upload.description'),
       icon: PhotoIcon,
       emoji: '🖼️',
       gradient: 'from-purple-400 via-pink-500 to-red-500',
-      features: ['Multiple photos', 'Batch analysis', 'History tracking']
+      features: [
+        t('doctor.methods.upload.features.multiple'),
+        t('doctor.methods.upload.features.batch'),
+        t('doctor.methods.upload.features.history')
+      ]
     },
     {
       id: 'symptoms',
-      title: 'Symptom Checker',
-      subtitle: 'Manual Diagnosis',
-      description: 'Describe symptoms for personalized recommendations',
+      title: t('doctor.methods.symptoms.title'),
+      subtitle: t('doctor.methods.symptoms.subtitle'),
+      description: t('doctor.methods.symptoms.description'),
       icon: MagnifyingGlassIcon,
       emoji: '🔍',
       gradient: 'from-orange-400 via-yellow-500 to-green-500',
-      features: ['Step-by-step guide', 'Expert knowledge', 'Offline support']
+      features: [
+        t('doctor.methods.symptoms.features.guide'),
+        t('doctor.methods.symptoms.features.expert'),
+        t('doctor.methods.symptoms.features.offline')
+      ]
     }
   ]
 
@@ -271,9 +276,7 @@ const CropDiagnosis = () => {
     setCurrentStep('camera') // Reusing camera view for preview for now
   }
 
-  const removeImage = (id) => {
-    setCapturedImages(capturedImages.filter(img => img.id !== id))
-  }
+
 
   const resetDiagnosis = () => {
     setCurrentStep('method')
@@ -333,19 +336,19 @@ const CropDiagnosis = () => {
           >
             <SparklesIcon className="w-6 h-6 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-800">AI Crop Doctor</h1>
+          <h1 className="text-3xl font-bold text-gray-800">{t('doctor.title')}</h1>
         </div>
-        <p className="text-gray-600 mb-6">Get instant diagnosis for your plants with AI-powered analysis</p>
+        <p className="text-gray-600 mb-6">{t('doctor.subtitle')}</p>
 
         {/* User Stats */}
         <div className="flex justify-center space-x-6 mb-8">
           <div className="text-center">
             <div className="text-2xl font-bold text-teal-600">{userStats.totalDiagnoses}</div>
-            <div className="text-sm text-gray-500">Diagnoses</div>
+            <div className="text-sm text-gray-500">{t('doctor.stats.diagnoses')}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">{userStats.accuracy}%</div>
-            <div className="text-sm text-gray-500">Accuracy</div>
+            <div className="text-sm text-gray-500">{t('doctor.stats.accuracy')}</div>
           </div>
           <div className="text-center">
             <div className="flex justify-center space-x-1 mb-1">
@@ -353,20 +356,19 @@ const CropDiagnosis = () => {
                 <StarIcon key={i} className={`w-4 h-4 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
               ))}
             </div>
-            <div className="text-sm text-gray-500">Rating</div>
+            <div className="text-sm text-gray-500">{t('doctor.stats.rating')}</div>
           </div>
         </div>
       </motion.div>
 
       {/* Method Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {diagnosisMethods.map((method, index) => (
+        {diagnosisMethods.map((method) => (
           <motion.div
             key={method.id}
             whileHover={{ scale: 1.02, y: -5 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {
-              setSelectedMethod(method.id)
               if (method.id === 'camera') {
                 setCurrentStep('camera')
                 startCamera()
@@ -480,8 +482,8 @@ const CropDiagnosis = () => {
           animate={{ opacity: 1, y: 0 }}
           className="absolute bottom-40 left-0 right-0 text-center px-6 z-10 safe-bottom"
         >
-          <p className="text-white text-lg font-medium mb-2">🌱 Perfect!</p>
-          <p className="text-white/80">Center the plant and ensure good lighting</p>
+          <p className="text-white text-lg font-medium mb-2">{t('doctor.camera.perfect')}</p>
+          <p className="text-white/80">{t('doctor.camera.guidance')}</p>
         </motion.div>
 
         {/* Bottom Controls - Fixed positioning for mobile */}
@@ -489,7 +491,7 @@ const CropDiagnosis = () => {
           <div className="flex items-center justify-between relative max-w-md mx-auto">
             {/* Gallery Preview - Left */}
             <div className="flex space-x-2">
-              {capturedImages.slice(-2).map((img, index) => (
+              {capturedImages.slice(-2).map((img) => (
                 <motion.div
                   key={img.id}
                   initial={{ scale: 0 }}
@@ -526,7 +528,7 @@ const CropDiagnosis = () => {
               disabled={capturedImages.length === 0}
               className="px-6 py-3 bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full text-white font-semibold shadow-lg disabled:opacity-50 text-sm"
             >
-              Analyze ({capturedImages.length})
+              {t('doctor.camera.analyze')} ({capturedImages.length})
             </motion.button>
           </div>
         </div>
@@ -550,7 +552,7 @@ const CropDiagnosis = () => {
               >
                 ✨
               </motion.div>
-              <p className="text-white text-xl font-bold">Great Shot!</p>
+              <p className="text-white text-xl font-bold">{t('doctor.camera.greatShot')}</p>
             </div>
           </motion.div>
         )}
@@ -582,8 +584,8 @@ const CropDiagnosis = () => {
           🌱
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">AI Analysis in Progress</h2>
-        <p className="text-gray-600 mb-8">Our AI is carefully examining your plant photos...</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('doctor.analysis.title')}</h2>
+        <p className="text-gray-600 mb-8">{t('doctor.analysis.description')}</p>
 
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
@@ -595,15 +597,15 @@ const CropDiagnosis = () => {
           />
         </div>
 
-        <p className="text-lg font-semibold text-teal-600 mb-8">{Math.round(analysisProgress)}% Complete</p>
+        <p className="text-lg font-semibold text-teal-600 mb-8">{Math.round(analysisProgress)}% {t('doctor.analysis.complete')}</p>
 
         {/* Analysis Steps */}
         <div className="space-y-3 text-left">
           {[
-            { step: 'Uploading images', completed: analysisProgress > 20 },
-            { step: 'Processing with AI', completed: analysisProgress > 50 },
-            { step: 'Identifying issues', completed: analysisProgress > 75 },
-            { step: 'Generating recommendations', completed: analysisProgress > 90 }
+            { step: t('doctor.analysis.steps.uploading'), completed: analysisProgress > 20 },
+            { step: t('doctor.analysis.steps.processing'), completed: analysisProgress > 50 },
+            { step: t('doctor.analysis.steps.identifying'), completed: analysisProgress > 75 },
+            { step: t('doctor.analysis.steps.generating'), completed: analysisProgress > 90 }
           ].map((item, index) => (
             <motion.div
               key={index}
@@ -648,8 +650,8 @@ const CropDiagnosis = () => {
           >
             🎉
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Diagnosis Complete!</h1>
-          <p className="text-gray-600">Here's what our AI found</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('doctor.results.complete')}</h1>
+          <p className="text-gray-600">{t('doctor.results.found')}</p>
         </div>
 
         {diagnosisResults && (
@@ -662,8 +664,8 @@ const CropDiagnosis = () => {
             >
               <div className="flex items-start space-x-6">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${diagnosisResults.severity === 'high' || diagnosisResults.severity === 'critical' ? 'bg-red-100' :
-                    diagnosisResults.severity === 'medium' ? 'bg-yellow-100' :
-                      'bg-green-100'
+                  diagnosisResults.severity === 'medium' ? 'bg-yellow-100' :
+                    'bg-green-100'
                   }`}>
                   <span className="text-2xl">
                     {diagnosisResults.severity === 'high' || diagnosisResults.severity === 'critical' ? '🚨' :
@@ -676,12 +678,12 @@ const CropDiagnosis = () => {
                     {diagnosisResults.primaryIssue}
                   </h2>
                   <p className="text-gray-600 mb-4">
-                    Plant Health: <span className="capitalize font-medium text-teal-600">{diagnosisResults.plantInfo?.plantHealth || diagnosisResults.plantHealth || 'Unknown'}</span>
+                    {t('doctor.results.plantHealth')} <span className="capitalize font-medium text-teal-600">{diagnosisResults.plantInfo?.plantHealth || diagnosisResults.plantHealth || t('doctor.results.unknown')}</span>
                   </p>
 
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-gray-500">Confidence:</span>
+                      <span className="text-sm font-semibold text-gray-500">{t('doctor.results.confidence')}</span>
                       <div className="flex items-center space-x-1">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div
@@ -708,7 +710,7 @@ const CropDiagnosis = () => {
             >
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center space-x-2">
                 <span>💊</span>
-                <span>Treatment Plan</span>
+                <span>{t('doctor.results.treatmentPlan')}</span>
               </h3>
 
               <div className="space-y-4">
@@ -729,7 +731,7 @@ const CropDiagnosis = () => {
                           rec.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                             'bg-green-100 text-green-700'
                           }`}>
-                          {rec.urgency} priority
+                          {rec.urgency} {t('doctor.results.priority')}
                         </span>
                       )}
                     </div>
@@ -751,7 +753,7 @@ const CropDiagnosis = () => {
                 onClick={resetDiagnosis}
                 className="flex-1 bg-gradient-to-r from-teal-400 to-cyan-500 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg"
               >
-                New Diagnosis
+                {t('doctor.results.newDiagnosis')}
               </motion.button>
 
               <motion.button
@@ -759,7 +761,7 @@ const CropDiagnosis = () => {
                 whileTap={{ scale: 0.98 }}
                 className="flex-1 bg-white border-2 border-teal-400 text-teal-600 font-semibold py-4 px-6 rounded-2xl"
               >
-                Save to History
+                {t('doctor.results.saveHistory')}
               </motion.button>
 
               <motion.button
@@ -767,7 +769,7 @@ const CropDiagnosis = () => {
                 whileTap={{ scale: 0.98 }}
                 className="flex-1 bg-purple-500 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg"
               >
-                Share Results
+                {t('doctor.results.share')}
               </motion.button>
             </motion.div>
           </>
@@ -794,9 +796,9 @@ const CropDiagnosis = () => {
               >
                 <MagnifyingGlassIcon className="w-6 h-6 text-white" />
               </motion.div>
-              <h1 className="text-3xl font-bold text-gray-800">Symptom Checker</h1>
+              <h1 className="text-3xl font-bold text-gray-800">{t('doctor.symptomChecker.title')}</h1>
             </div>
-            <p className="text-gray-600">Coming Soon</p>
+            <p className="text-gray-600">{t('doctor.symptomChecker.comingSoon')}</p>
           </motion.div>
 
           {/* Coming Soon Card */}
@@ -806,27 +808,26 @@ const CropDiagnosis = () => {
             className="bg-white rounded-3xl p-12 shadow-xl border border-white/40 text-center"
           >
             <div className="text-8xl mb-6">🔧</div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Feature Coming Soon</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">{t('doctor.symptomChecker.featureComingSoon')}</h2>
             <p className="text-gray-600 mb-8 text-lg">
-              We're working hard to bring you an advanced symptom checker with AI-powered diagnosis.
-              This feature will help you identify plant problems step-by-step.
+              {t('doctor.symptomChecker.description')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="text-center">
                 <div className="text-4xl mb-2">🤖</div>
-                <h3 className="font-semibold text-gray-800 mb-2">AI-Powered</h3>
-                <p className="text-sm text-gray-600">Advanced machine learning for accurate diagnosis</p>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('doctor.symptomChecker.aiPowered')}</h3>
+                <p className="text-sm text-gray-600">{t('doctor.symptomChecker.aiDest')}</p>
               </div>
               <div className="text-center">
                 <div className="text-4xl mb-2">📋</div>
-                <h3 className="font-semibold text-gray-800 mb-2">Step-by-Step</h3>
-                <p className="text-sm text-gray-600">Guided questions for precise identification</p>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('doctor.symptomChecker.stepByStep')}</h3>
+                <p className="text-sm text-gray-600">{t('doctor.symptomChecker.stepDesc')}</p>
               </div>
               <div className="text-center">
                 <div className="text-4xl mb-2">💡</div>
-                <h3 className="font-semibold text-gray-800 mb-2">Expert Advice</h3>
-                <p className="text-sm text-gray-600">Professional treatment recommendations</p>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('doctor.symptomChecker.expertAdvice')}</h3>
+                <p className="text-sm text-gray-600">{t('doctor.symptomChecker.expertDesc')}</p>
               </div>
             </div>
 
@@ -836,7 +837,7 @@ const CropDiagnosis = () => {
               onClick={resetDiagnosis}
               className="bg-gradient-to-r from-orange-400 to-yellow-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg"
             >
-              Back to Diagnosis
+              {t('doctor.symptomChecker.back')}
             </motion.button>
           </motion.div>
         </div>
@@ -854,7 +855,7 @@ const CropDiagnosis = () => {
           className="text-center max-w-md"
         >
           <div className="text-6xl mb-6">😓</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Oops! Something went wrong</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('doctor.errors.oops')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -862,7 +863,7 @@ const CropDiagnosis = () => {
             onClick={resetDiagnosis}
             className="bg-gradient-to-r from-red-400 to-orange-500 text-white font-semibold py-3 px-8 rounded-2xl shadow-lg"
           >
-            Try Again
+            {t('doctor.errors.tryAgain')}
           </motion.button>
         </motion.div>
       </div>
