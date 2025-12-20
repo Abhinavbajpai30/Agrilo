@@ -4,6 +4,7 @@
  * Refactored to use Open-Meteo Geocoding and removed OpenEPI dependency
  */
 
+const axios = require('axios');
 const openMeteoService = require('./openMeteoService');
 const logger = require('../utils/logger');
 const { ApiError } = require('../middleware/errorHandler');
@@ -88,48 +89,98 @@ class GeocodingApiService {
 
   /**
    * Convert coordinates to address (reverse geocoding)
-   * Note: Open-Meteo doesn't natively support full reverse geocoding in the same way.
-   * We will limit this functionality or throw an error if strictly dependent on full address.
-   * For now, we'll return a basic structure to prevent crashes if called.
+   * Uses Nominatim (OpenStreetMap) for detailed address data
    */
   async reverseGeocode(lat, lon) {
-    // Open-Meteo doesn't have a reverse geocoding 'address' endpoint.
-    // We would need a different provider like Nominatim OS or Google Maps.
-    // Since we are migrating away from OpenEPI and avoiding mocks, 
-    // we will return a minimal valid response that indicates limitation.
+    try {
+      // Using Nominatim for reverse geocoding
+      const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+        params: {
+          lat: lat,
+          lon: lon,
+          format: 'json',
+          addressdetails: 1,
+          zoom: 18 // Building level
+        },
+        headers: {
+          'User-Agent': 'Agrilo/1.0 (contact@agrilo.com)' // Required by Nominatim
+        },
+        timeout: 5000
+      });
 
-    logger.warn('Reverse geocoding requested but not fully supported by Open-Meteo basic plan', { lat, lon });
+      if (response.data && response.data.address) {
+        const addr = response.data.address;
+        const formattedAddress = response.data.display_name;
 
-    return {
-      coordinates: { latitude: lat, longitude: lon },
-      address: {
-        formatted: `Dimensions: ${lat.toFixed(4)}, ${lon.toFixed(4)}`, // Placeholder
-        components: {},
-        placeType: 'coordinates'
-      },
-      administrativeInfo: {},
-      timestamp: new Date().toISOString(),
-      source: 'Open-Meteo (Coordinates Only)'
-    };
+        return {
+          coordinates: { latitude: lat, longitude: lon },
+          address: {
+            formatted: formattedAddress,
+            components: {
+              locality: addr.city || addr.town || addr.village || addr.suburb || addr.hamlet,
+              region: addr.state || addr.province || addr.region,
+              country: addr.country,
+              countryCode: addr.country_code,
+              postcode: addr.postcode,
+              district: addr.state_district || addr.county
+            },
+            placeType: response.data.type || 'place'
+          },
+          administrativeInfo: {
+            country: addr.country,
+            region: addr.state || addr.province,
+            district: addr.county || addr.state_district,
+            locality: addr.city || addr.town || addr.village
+          },
+          timestamp: new Date().toISOString(),
+          source: 'Nominatim (OSM)'
+        };
+      }
+
+      throw new Error('No address found');
+    } catch (error) {
+      logger.error('Nominatim Reverse Geocoding Error', { error: error.message, lat, lon });
+
+      // Fallback or return minimal data
+      return {
+        coordinates: { latitude: lat, longitude: lon },
+        address: {
+          formatted: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+          components: {},
+          placeType: 'coordinates'
+        },
+        administrativeInfo: {},
+        timestamp: new Date().toISOString(),
+        source: 'Fallback'
+      };
+    }
   }
 
   /**
    * Get administrative information for coordinates
-   * Limited support via Open-Meteo
+   * Uses reverseGeocode to get detailed info
    */
   async getAdministrativeInfo(lat, lon) {
     try {
-      // We can get some data from weather endpoint (timezone, elevation) if needed,
-      // but for now we'll return basic coordinate info.
+      const result = await this.reverseGeocode(lat, lon);
+
       return {
         coordinates: { latitude: lat, longitude: lon },
-        timezone: 'auto', // Open-Meteo supports auto timezone in weather call
+        country: result.administrativeInfo?.country,
+        region: result.administrativeInfo?.region,
+        district: result.administrativeInfo?.district,
+        locality: result.administrativeInfo?.locality,
+        timezone: 'auto', // Can be fetched from Open-Meteo if strictly needed separately
         timestamp: new Date().toISOString(),
-        source: 'Open-Meteo'
+        source: result.source
       };
     } catch (error) {
       logger.error('Failed to get administrative info', { lat, lon, error: error.message });
-      throw error;
+      // Return minimal valid object to prevent crashes
+      return {
+        coordinates: { latitude: lat, longitude: lon },
+        source: 'Error'
+      };
     }
   }
 

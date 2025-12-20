@@ -286,7 +286,18 @@ router.post('/complete', validateOnboardingData, handleValidationErrors, asyncHa
         },
         boundary: {
           type: 'Polygon',
-          coordinates: [farmBoundary.coordinates.map(coord => [coord[1], coord[0]])]
+          coordinates: [(() => {
+            const coords = farmBoundary.coordinates.map(c => [c[1], c[0]]);
+            // Close polygon
+            if (coords.length > 0) {
+              const first = coords[0];
+              const last = coords[coords.length - 1];
+              if (first[0] !== last[0] || first[1] !== last[1]) {
+                coords.push(first);
+              }
+            }
+            return coords;
+          })()]
         },
         soilType: soilData.soilType || 'unknown',
         status: 'active'
@@ -550,23 +561,20 @@ router.put('/update', authenticateUser, asyncHandler(async (req, res) => {
             // Create a valid polygon from the farm boundary
             const coords = farmBoundary.coordinates;
 
-            // Convert coordinates from [lat, lng] to [lng, lat] format and create a valid polygon
-            const convertedCoords = coords.map(coord => [coord[1], coord[0]]); // Convert lat,lng to lng,lat
+            // Convert coordinates from [lat, lng] to [lng, lat] format (GeoJSON standard)
+            // Frontend sends [lat, lng] arrays
+            const convertedCoords = coords.map(coord => [coord[1], coord[0]]);
 
-            // Create a simple bounding box around the center point to ensure validity
-            const centerLng = longitude;
-            const centerLat = latitude;
-            const offset = 0.002; // Larger offset for a more reasonable farm size
+            // Ensure the polygon is closed (first point matches last point)
+            if (convertedCoords.length > 0) {
+              const first = convertedCoords[0];
+              const last = convertedCoords[convertedCoords.length - 1];
+              if (first[0] !== last[0] || first[1] !== last[1]) {
+                convertedCoords.push(first);
+              }
+            }
 
-            const boundingBox = [
-              [centerLng - offset, centerLat - offset],
-              [centerLng + offset, centerLat - offset],
-              [centerLng + offset, centerLat + offset],
-              [centerLng - offset, centerLat + offset],
-              [centerLng - offset, centerLat - offset] // Close the polygon
-            ];
-
-            return boundingBox;
+            return convertedCoords;
           })()]
         },
         country: enhancedLocation.country,

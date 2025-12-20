@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Polygon, Marker, useMapEvents } from 'react-le
 import { PencilIcon, TrashIcon, CheckCircleIcon, MapIcon } from '@heroicons/react/24/outline'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useLanguage } from '../../../contexts/LanguageContext'
+
 
 // Fix for default markers
 delete L.Icon.Default.prototype._getIconUrl
@@ -20,16 +20,16 @@ const FarmDrawer = ({ isDrawing, onPointAdd, onComplete, farmBoundary, currentPo
   useMapEvents({
     click(e) {
       if (!isDrawing) return
-      
+
       const newPoint = [e.latlng.lat, e.latlng.lng]
       const updatedPoints = [...currentPoints, newPoint]
-      
+
       console.log('Adding point:', newPoint)
       console.log('Updated points:', updatedPoints)
-      
+
       setCurrentPoints(updatedPoints)
       onPointAdd(updatedPoints)
-      
+
       // Auto-complete polygon if we have enough points and user clicks near start
       if (updatedPoints.length >= 3) {
         const firstPoint = updatedPoints[0]
@@ -50,7 +50,7 @@ const FarmDrawer = ({ isDrawing, onPointAdd, onComplete, farmBoundary, currentPo
     if (!isDrawing) {
       setCurrentPoints([])
     }
-  }, [isDrawing])
+  }, [isDrawing, setCurrentPoints])
 
   return (
     <>
@@ -60,7 +60,7 @@ const FarmDrawer = ({ isDrawing, onPointAdd, onComplete, farmBoundary, currentPo
           {currentPoints.map((point, index) => (
             <Marker key={index} position={point} />
           ))}
-          
+
           {/* Show partial polygon if we have 3+ points */}
           {currentPoints.length >= 3 && (
             <Polygon
@@ -73,7 +73,7 @@ const FarmDrawer = ({ isDrawing, onPointAdd, onComplete, farmBoundary, currentPo
           )}
         </>
       )}
-      
+
       {/* Final farm boundary */}
       {farmBoundary.length > 0 && (
         <Polygon
@@ -88,8 +88,7 @@ const FarmDrawer = ({ isDrawing, onPointAdd, onComplete, farmBoundary, currentPo
   )
 }
 
-const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = false }) => {
-  const { t } = useLanguage()
+const FarmPlotting = ({ onNext, onBack, onboardingData, updateData }) => {
   const [isDrawing, setIsDrawing] = useState(false)
   const [farmBoundary, setFarmBoundary] = useState(onboardingData.farmBoundary?.coordinates || [])
   const [farmName, setFarmName] = useState(onboardingData.farmBoundary?.name || '')
@@ -99,10 +98,28 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
   const [currentPoints, setCurrentPoints] = useState([])
   const mapRef = useRef()
 
-  // Get initial map center from onboarding data
-  const mapCenter = onboardingData.location?.coordinates 
-    ? [onboardingData.location.coordinates[1], onboardingData.location.coordinates[0]]
-    : [20.5937, 78.9629] // Default to India coordinates if no location data
+  // Validate coordinates helper
+  const isValidCoordinate = (coords) => {
+    return coords &&
+      typeof coords[0] === 'number' && !isNaN(coords[0]) &&
+      typeof coords[1] === 'number' && !isNaN(coords[1])
+  }
+
+  // Get initial map center from onboarding data with validation
+  const getMapCenter = () => {
+    if (onboardingData.location?.coordinates) {
+      const lat = onboardingData.location.coordinates[1]
+      const lng = onboardingData.location.coordinates[0]
+
+      if (typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng)) {
+        return [lat, lng]
+      }
+    }
+    // Default to India coordinates if no location data or invalid
+    return [20.5937, 78.9629]
+  }
+
+  const mapCenter = getMapCenter()
 
   console.log('FarmPlotting - Raw coordinates:', onboardingData.location?.coordinates)
   console.log('FarmPlotting - Calculated mapCenter:', mapCenter)
@@ -122,17 +139,25 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
   // Handle map centering when coordinates change
   useEffect(() => {
     if (mapRef.current && onboardingData.location?.coordinates) {
-      const map = mapRef.current;
-      const newCenter = [onboardingData.location.coordinates[1], onboardingData.location.coordinates[0]];
-      console.log('Centering map to:', newCenter);
-      map.setView(newCenter, 15);
+      const lat = onboardingData.location.coordinates[1]
+      const lng = onboardingData.location.coordinates[0]
+
+      // Validate coordinates before using them
+      if (typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng)) {
+        const map = mapRef.current
+        const newCenter = [lat, lng]
+        console.log('Centering map to:', newCenter)
+        map.setView(newCenter, 15)
+      } else {
+        console.warn('Invalid coordinates in useEffect:', onboardingData.location.coordinates)
+      }
     }
   }, [onboardingData.location?.coordinates])
 
   // Calculate area of polygon in hectares using proper geographic calculations
   const calculateArea = (points) => {
     if (points.length < 3) return 0
-    
+
     // Use the Shoelace formula for polygon area
     let area = 0
     for (let i = 0; i < points.length; i++) {
@@ -141,20 +166,20 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
       area -= points[j][0] * points[i][1]
     }
     area = Math.abs(area) / 2
-    
+
     // Convert to square meters using proper geographic conversion
     // 1 degree of latitude ≈ 111,320 meters
     // 1 degree of longitude ≈ 111,320 * cos(latitude) meters
     const avgLat = points.reduce((sum, point) => sum + point[0], 0) / points.length
     const latMeters = 111320
     const lngMeters = 111320 * Math.cos(avgLat * Math.PI / 180)
-    
+
     // Convert to square meters
     const areaSqMeters = area * latMeters * lngMeters
-    
+
     // Convert to hectares (1 hectare = 10,000 square meters)
     const hectares = areaSqMeters / 10000
-    
+
     return Math.max(hectares, 0.01) // Ensure minimum value for display
   }
 
@@ -182,11 +207,11 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
     setFarmBoundary(points)
     setIsDrawing(false)
     setIsComplete(true)
-    
+
     const area = calculateArea(points)
     console.log('Final calculated area:', area)
     setCalculatedArea(area)
-    
+
     // Update onboarding data
     updateData({
       farmBoundary: {
@@ -195,10 +220,10 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
         name: farmName || 'My Farm'
       }
     })
-    
+
     // Show celebration
     showCelebration()
-    
+
     console.log('isComplete set to true, farmBoundary length:', points.length)
   }
 
@@ -214,7 +239,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
   // Show celebration animation
   const showCelebration = () => {
     // Create confetti effect
-    const confetti = Array.from({ length: 30 }, (_, i) => {
+    Array.from({ length: 30 }, (_, i) => {
       const element = document.createElement('div')
       element.style.position = 'fixed'
       element.style.width = '10px'
@@ -225,9 +250,9 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
       element.style.zIndex = '1000'
       element.style.left = Math.random() * window.innerWidth + 'px'
       element.style.top = '-10px'
-      
+
       document.body.appendChild(element)
-      
+
       // Animate
       element.animate([
         { transform: 'translateY(-10px) rotate(0deg)', opacity: 1 },
@@ -293,7 +318,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
           >
             <MapIcon className="w-8 h-8 text-white" />
           </motion.div>
-          
+
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
             Plot Your Farm Boundary 🗺️
           </h1>
@@ -326,7 +351,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                         <span>Start Drawing</span>
                       </motion.button>
                     )}
-                    
+
                     {(isDrawing || isComplete) && (
                       <motion.button
                         onClick={clearBoundary}
@@ -338,7 +363,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                         <span>Clear</span>
                       </motion.button>
                     )}
-                    
+
                     {isDrawing && currentPoints.length >= 3 && (
                       <motion.button
                         onClick={() => completeBoundary(currentPoints)}
@@ -351,7 +376,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                       </motion.button>
                     )}
                   </div>
-                  
+
                   {/* Real-time area display */}
                   {calculatedArea > 0 && (
                     <motion.div
@@ -367,11 +392,11 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                   )}
                 </div>
               </div>
-              
+
               {/* Map Container */}
               <div className="h-96 relative">
                 <MapContainer
-                  key={`map-${mapCenter[0]}-${mapCenter[1]}`}
+                  key={`map-${isValidCoordinate(mapCenter) ? mapCenter[0] : 'default'}-${isValidCoordinate(mapCenter) ? mapCenter[1] : 'default'}`}
                   center={mapCenter}
                   zoom={15}
                   style={{ height: '100%', width: '100%' }}
@@ -381,7 +406,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
-                  
+
                   {/* Center marker */}
                   <Marker position={mapCenter}>
                     <motion.div
@@ -392,18 +417,18 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                       📍
                     </motion.div>
                   </Marker>
-                  
-                                      {/* Drawing component */}
-                    <FarmDrawer
-                      isDrawing={isDrawing}
-                      onPointAdd={handlePointAdd}
-                      onComplete={completeBoundary}
-                      farmBoundary={farmBoundary}
-                      currentPoints={currentPoints}
-                      setCurrentPoints={setCurrentPoints}
-                    />
+
+                  {/* Drawing component */}
+                  <FarmDrawer
+                    isDrawing={isDrawing}
+                    onPointAdd={handlePointAdd}
+                    onComplete={completeBoundary}
+                    farmBoundary={farmBoundary}
+                    currentPoints={currentPoints}
+                    setCurrentPoints={setCurrentPoints}
+                  />
                 </MapContainer>
-                
+
                 {/* Drawing cursor indicator */}
                 {isDrawing && (
                   <motion.div
@@ -448,7 +473,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                   />
                 </div>
-                
+
                 {calculatedArea > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -554,7 +579,7 @@ const FarmPlotting = ({ onNext, onBack, onboardingData, updateData, isAddFarm = 
           >
             ← Back
           </button>
-          
+
           {isComplete && (
             <motion.button
               onClick={handleNext}

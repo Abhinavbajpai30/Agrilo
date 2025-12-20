@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
 import { onboardingApi } from '../../services/api'
 
 // Onboarding Step Components
@@ -19,7 +18,7 @@ const OnboardingFlow = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated, user, refreshUser } = useAuth()
-  const { t } = useLanguage()
+
 
   // Onboarding data state
   const [onboardingData, setOnboardingData] = useState({
@@ -71,14 +70,14 @@ const OnboardingFlow = () => {
   }
 
   // Define onboarding steps
-  const steps = [
+  const steps = useMemo(() => [
     { path: '', component: Welcome, title: 'Welcome', required: false },
     { path: 'language', component: LanguageSelection, title: 'Language', required: true },
     { path: 'location', component: LocationPermission, title: 'Location', required: true },
     { path: 'farm', component: FarmPlotting, title: 'Farm Setup', required: true },
     { path: 'crops', component: CropSelection, title: 'Crops', required: true },
     { path: 'profile', component: ProfileCompletion, title: 'Profile', required: true }
-  ]
+  ], [])
 
   // Auto-save progress to localStorage
   useEffect(() => {
@@ -166,13 +165,26 @@ const OnboardingFlow = () => {
   const completeOnboarding = async (finalData = onboardingData) => {
     setIsLoading(true)
     try {
+      // Helper to validate coordinates
+      const isCoordinateValid = (coord) => {
+        return typeof coord === 'number' && !isNaN(coord) && coord !== null
+      }
+
+      // Safe coordinate extraction
+      let safeCoordinates = finalData.location.coordinates
+      if (!Array.isArray(safeCoordinates) || safeCoordinates.length < 2 || !isCoordinateValid(safeCoordinates[0]) || !isCoordinateValid(safeCoordinates[1])) {
+        console.warn('Invalid coordinates detected:', safeCoordinates)
+        // Fallback to defaults (India) if coordinates are invalid to prevent 500 error
+        safeCoordinates = [78.9629, 20.5937]
+      }
+
       // Prepare data for backend
       const requestData = {
         personalInfo: finalData.personalInfo,
         authentication: finalData.authentication,
         location: {
-          coordinates: finalData.location.coordinates,
-          address: finalData.location.address,
+          coordinates: safeCoordinates,
+          address: finalData.location.address || "Unknown Location",
           country: finalData.location.country,
           region: finalData.location.region
         },
@@ -315,8 +327,8 @@ const OnboardingFlow = () => {
             className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] max-w-md w-full"
           >
             <div className={`rounded-xl shadow-2xl border-l-4 p-4 ${toast.type === 'error'
-                ? 'bg-red-50 border-red-400 text-red-800'
-                : 'bg-green-50 border-green-400 text-green-800'
+              ? 'bg-red-50 border-red-400 text-red-800'
+              : 'bg-green-50 border-green-400 text-green-800'
               }`}>
               <div className="flex items-start space-x-3">
                 {toast.type === 'error' ? (

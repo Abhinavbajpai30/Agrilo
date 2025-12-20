@@ -51,31 +51,81 @@ const FarmMapViewer = ({
     }, []);
 
     // Fit bounds when selected farm changes
+    // Fit bounds when selected farm changes
     useEffect(() => {
         if (map && farms.length > 0) {
+            console.log('FarmMapViewer: Farms data:', farms)
+            console.log('FarmMapViewer: Selected Farm ID:', selectedFarmId)
+
             if (selectedFarmId) {
                 const farm = farms.find(f => f._id === selectedFarmId);
-                if (farm?.location?.boundary?.coordinates?.[0]) {
+                console.log('FarmMapViewer: Selected Farm:', farm)
+
+                if (farm) {
                     const bounds = new window.google.maps.LatLngBounds();
-                    const coords = farm.location.boundary.coordinates[0];
-                    coords.forEach(coord => {
-                        bounds.extend({ lat: coord[1], lng: coord[0] });
-                    });
-                    map.fitBounds(bounds);
+                    let hasPoints = false;
+
+                    // 1. Try Boundary
+                    if (farm.location?.boundary?.coordinates?.[0] && farm.location.boundary.coordinates[0].length > 0) {
+                        console.log('FarmMapViewer: Using farm boundary for centering')
+                        const coords = farm.location.boundary.coordinates[0];
+                        coords.forEach(coord => {
+                            bounds.extend({ lat: coord[1], lng: coord[0] });
+                            hasPoints = true;
+                        });
+                    }
+                    // 2. Try Center Point (GeoJSON Point)
+                    else if (farm.location?.centerPoint?.coordinates) {
+                        const [lng, lat] = farm.location.centerPoint.coordinates;
+                        if (lat && lng) {
+                            console.log('FarmMapViewer: Using centerPoint for centering', { lat, lng })
+                            map.panTo({ lat, lng });
+                            map.setZoom(16);
+                            return; // Exit as we've already set the view
+                        }
+                    }
+                    // 3. Try Legacy Coordinates (if any)
+                    else if (farm.location?.coordinates && farm.location.coordinates.length === 2) {
+                        const [lng, lat] = farm.location.coordinates; // Assuming [lng, lat] format
+                        if (lat && lng) {
+                            console.log('FarmMapViewer: Using legacy coordinates for centering', { lat, lng })
+                            map.panTo({ lat, lng });
+                            map.setZoom(16);
+                            return;
+                        }
+                    }
+
+                    if (hasPoints) {
+                        map.fitBounds(bounds);
+                    } else {
+                        console.warn('FarmMapViewer: No location data found for selected farm')
+                    }
                 }
             } else {
                 // Fit all farms if none selected
                 const bounds = new window.google.maps.LatLngBounds();
                 let hasPoints = false;
                 farms.forEach(farm => {
-                    if (farm?.location?.boundary?.coordinates?.[0]) {
+                    // Try boundary
+                    if (farm.location?.boundary?.coordinates?.[0]) {
                         farm.location.boundary.coordinates[0].forEach(coord => {
                             bounds.extend({ lat: coord[1], lng: coord[0] });
                             hasPoints = true;
                         });
                     }
+                    // Try center point
+                    else if (farm.location?.centerPoint?.coordinates) {
+                        const [lng, lat] = farm.location.centerPoint.coordinates;
+                        if (lat && lng) {
+                            bounds.extend({ lat, lng });
+                            hasPoints = true;
+                        }
+                    }
                 });
-                if (hasPoints) map.fitBounds(bounds);
+
+                if (hasPoints) {
+                    map.fitBounds(bounds);
+                }
             }
         }
     }, [map, farms, selectedFarmId]);

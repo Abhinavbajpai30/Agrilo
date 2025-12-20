@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MapPinIcon, SignalIcon, CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useLanguage } from '../../../contexts/LanguageContext'
 import { onboardingApi } from '../../../services/api'
 
 // Fix for default markers in react-leaflet
@@ -71,13 +70,13 @@ const MapClickHandler = ({ onMapClick, isManualMode }) => {
   // Update map options when manual mode changes
   useEffect(() => {
     console.log('Updating map controls, manual mode:', isManualMode)
-    
+
     // Check if map is available before trying to access its methods
     if (!map) {
       console.log('Map not available yet')
       return
     }
-    
+
     if (isManualMode) {
       try {
         map.dragging?.disable()
@@ -111,7 +110,6 @@ const MapClickHandler = ({ onMapClick, isManualMode }) => {
 }
 
 const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
-  const { t } = useLanguage()
   const [locationState, setLocationState] = useState('initial') // initial, requesting, success, error, manual
   const [coordinates, setCoordinates] = useState(null)
   const [address, setAddress] = useState('')
@@ -121,6 +119,26 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
   const [isManualMode, setIsManualMode] = useState(false)
   const [selectedCoordinates, setSelectedCoordinates] = useState(null)
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' })
+
+  // Validate coordinates helper
+  const isValidCoordinate = (coords) => {
+    return coords &&
+      typeof coords.latitude === 'number' && !isNaN(coords.latitude) &&
+      typeof coords.longitude === 'number' && !isNaN(coords.longitude)
+  }
+
+  // Initialize from onboarding data if available
+  useEffect(() => {
+    if (onboardingData?.location?.coordinates && locationState === 'initial') {
+      const [lng, lat] = onboardingData.location.coordinates
+      if (lat && lng) {
+        console.log('Restoring location from onboarding data:', { lat, lng })
+        setCoordinates({ latitude: lat, longitude: lng })
+        setAddress(onboardingData.location.address || '')
+        setLocationState('success')
+      }
+    }
+  }, [onboardingData, locationState])
 
   // Benefits of location access
   const benefits = [
@@ -159,16 +177,16 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           }
-          
+
           setCoordinates(coords)
-          
+
           // Reverse geocode to get address
           try {
             console.log('Reverse geocoding coordinates:', coords.latitude, coords.longitude)
             const addressData = await reverseGeocode(coords.latitude, coords.longitude)
             console.log('Geocoding result:', addressData)
             setAddress(addressData)
-            
+
             // Update onboarding data
             updateData({
               location: {
@@ -179,16 +197,16 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                 region: addressData.split(',')[addressData.split(',').length - 2]?.trim() || ''
               }
             })
-            
+
             // Show success toast
             showToast('GPS location found successfully! 📍', 'success')
-            
+
             setLocationState('success')
           } catch (err) {
             console.error('Geocoding failed:', err)
             setLocationState('success') // Still proceed with coordinates
           }
-          
+
           setIsLoading(false)
         },
         (error) => {
@@ -222,7 +240,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
       const coords = await geocodeLocation(manualLocation)
       setCoordinates(coords)
       setAddress(manualLocation)
-      
+
       updateData({
         location: {
           ...onboardingData.location,
@@ -232,17 +250,17 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           region: manualLocation.split(',')[manualLocation.split(',').length - 2]?.trim() || ''
         }
       })
-      
+
       // Show success toast
       showToast('Location found successfully! 🎉', 'success')
-      
+
       setLocationState('success')
     } catch (err) {
       console.error('Manual location geocoding failed:', err)
-      
+
       // Provide specific error messages based on the error type
       let errorMessage = 'Could not find that location. Please try a different address.'
-      
+
       if (err.message === 'Location not found') {
         errorMessage = 'Could not find that location. Please try a different address or be more specific.'
       } else if (err.message.includes('500') || err.message.includes('Internal Server Error')) {
@@ -250,13 +268,13 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
       } else if (err.message.includes('Network') || err.message.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.'
       }
-      
+
       // Show toast notification
       showToast(errorMessage, 'error')
-      
+
       // Also set error for the input field
       setError(errorMessage)
-      
+
       // Stay in manual state so user can try again
       setLocationState('manual')
     } finally {
@@ -267,23 +285,23 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
   // Handle map click for manual location selection
   const handleMapClick = async (latlng) => {
     console.log('Map clicked:', latlng, 'Manual mode:', isManualMode)
-    
+
     if (!isManualMode) {
       console.log('Not in manual mode, ignoring click')
       return
     }
-    
+
     console.log('Processing manual location selection:', latlng)
     setIsLoading(true)
     setSelectedCoordinates(latlng)
-    
+
     try {
       // Reverse geocode the clicked location
       console.log('Reverse geocoding coordinates:', latlng.lat, latlng.lng)
       const addressData = await reverseGeocode(latlng.lat, latlng.lng)
       console.log('Geocoding result:', addressData)
       setAddress(addressData)
-      
+
       // Update onboarding data with new coordinates
       updateData({
         location: {
@@ -294,7 +312,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           region: addressData.split(',')[addressData.split(',').length - 2]?.trim() || ''
         }
       })
-      
+
       setCoordinates({ latitude: latlng.lat, longitude: latlng.lng })
       setIsManualMode(false)
       console.log('Location selection completed successfully')
@@ -367,7 +385,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
     try {
       const response = await onboardingApi.geocode({ lat, lng })
       const data = response.data
-      
+
       if (data.status === 'success' && data.data.address) {
         return data.data.address
       } else {
@@ -385,10 +403,10 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
     try {
       console.log('Geocoding location:', location)
       const response = await onboardingApi.geocode({ address: location })
-      
+
       const data = response.data
       console.log('Geocoding response:', data)
-      
+
       if (data.status === 'success' && data.data.coordinates) {
         return {
           latitude: data.data.coordinates[1],
@@ -401,12 +419,12 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
       }
     } catch (error) {
       console.error('Geocoding error:', error)
-      
+
       // Re-throw network errors
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error('Network error - Please check your internet connection')
       }
-      
+
       throw error
     }
   }
@@ -414,7 +432,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <style>{customMarkerStyle}</style>
-      
+
       {/* Toast Notification */}
       <AnimatePresence>
         {toast.show && (
@@ -424,11 +442,10 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
             exit={{ opacity: 0, y: -50, scale: 0.9 }}
             className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] max-w-md w-full"
           >
-            <div className={`rounded-xl shadow-2xl border-l-4 p-4 ${
-              toast.type === 'error' 
-                ? 'bg-red-50 border-red-400 text-red-800' 
-                : 'bg-green-50 border-green-400 text-green-800'
-            }`}>
+            <div className={`rounded-xl shadow-2xl border-l-4 p-4 ${toast.type === 'error'
+              ? 'bg-red-50 border-red-400 text-red-800'
+              : 'bg-green-50 border-green-400 text-green-800'
+              }`}>
               <div className="flex items-start space-x-3">
                 {toast.type === 'error' ? (
                   <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
@@ -449,7 +466,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <div className="max-w-4xl w-full">
         {/* Header */}
         <motion.div
@@ -465,12 +482,12 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           >
             <MapPinIcon className="w-8 h-8 text-white" />
           </motion.div>
-          
+
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
             Where is your farm? 📍
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Help us provide you with accurate weather forecasts, soil data, and 
+            Help us provide you with accurate weather forecasts, soil data, and
             farming recommendations specific to your location.
           </p>
         </motion.div>
@@ -498,11 +515,11 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                     <div className="flex items-start space-x-4">
                       <motion.div
                         className="text-3xl"
-                        animate={{ 
+                        animate={{
                           scale: [1, 1.1, 1],
                           rotate: [0, 5, -5, 0]
                         }}
-                        transition={{ 
+                        transition={{
                           duration: 3 + index,
                           repeat: Infinity,
                           ease: "easeInOut"
@@ -536,11 +553,11 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                     📡
                   </motion.div>
                 </motion.button>
-                
+
                 <p className="text-sm text-gray-500 mb-4">
                   We'll only use this to provide you with local farming data
                 </p>
-                
+
                 <button
                   onClick={() => {
                     setLocationState('manual')
@@ -565,18 +582,18 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
             >
               <motion.div
                 className="w-32 h-32 bg-gradient-to-br from-blue-400 to-green-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl"
-                animate={{ 
+                animate={{
                   rotate: 360,
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
+                transition={{
                   rotate: { duration: 2, repeat: Infinity, ease: "linear" },
                   scale: { duration: 1.5, repeat: Infinity }
                 }}
               >
                 <SignalIcon className="w-12 h-12 text-white" />
               </motion.div>
-              
+
               <motion.h2
                 className="text-2xl font-bold text-gray-800 mb-4"
                 animate={{ opacity: [0.5, 1, 0.5] }}
@@ -584,11 +601,11 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
               >
                 Finding your location... 🛰️
               </motion.h2>
-              
+
               <p className="text-gray-600 mb-8">
                 Please allow location access when prompted by your browser
               </p>
-              
+
               {/* Animated GPS waves */}
               <div className="relative">
                 {[1, 2, 3].map((i) => (
@@ -596,7 +613,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                     key={i}
                     className="absolute inset-0 border-2 border-blue-400 rounded-full"
                     initial={{ scale: 0, opacity: 1 }}
-                    animate={{ 
+                    animate={{
                       scale: 2 + i * 0.5,
                       opacity: 0
                     }}
@@ -612,7 +629,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           )}
 
           {/* Success State - Map View */}
-          {locationState === 'success' && coordinates && (
+          {locationState === 'success' && isValidCoordinate(coordinates) && (
             <motion.div
               key="success"
               initial={{ opacity: 0, y: 30 }}
@@ -687,10 +704,10 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                       </div>
                     </Popup>
                   </Marker>
-                  
+
                   {/* Show selected coordinates if in manual mode */}
                   {isManualMode && selectedCoordinates && (
-                    <Marker 
+                    <Marker
                       position={[selectedCoordinates.lat, selectedCoordinates.lng]}
                       icon={L.divIcon({
                         className: 'custom-div-icon',
@@ -718,11 +735,10 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                   onClick={toggleManualMode}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center space-x-2 ${
-                    isManualMode 
-                      ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg' 
-                      : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
-                  }`}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center space-x-2 ${isManualMode
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
+                    }`}
                 >
                   <MapPinIcon className="w-5 h-5" />
                   <span>{isManualMode ? 'Cancel Selection' : 'Choose Different Location'}</span>
@@ -736,9 +752,8 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.05 }}
                   whileTap={{ scale: isLoading ? 1 : 0.95 }}
-                  className={`bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-full text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center space-x-3 mx-auto ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-full text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center space-x-3 mx-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isLoading ? (
                     <>
@@ -812,7 +827,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
                   Enter Your Farm Location 📝
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -829,12 +844,11 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                         if (toast.show) hideToast()
                       }}
                       placeholder="e.g., Nakuru County, Kenya or 123 Farm Road, Texas, USA"
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
-                        error ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        }`}
                     />
                   </div>
-                  
+
                   {/* Error Display */}
                   {error && (
                     <motion.div
@@ -854,7 +868,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                       </div>
                     </motion.div>
                   )}
-                  
+
                   <div className="flex space-x-4">
                     <button
                       onClick={() => {
@@ -870,11 +884,10 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
                       disabled={!manualLocation.trim() || isLoading}
                       whileHover={{ scale: isLoading ? 1 : 1.02 }}
                       whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                      className={`flex-1 font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 ${
-                        isLoading || !manualLocation.trim()
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg hover:shadow-xl'
-                      }`}
+                      className={`flex-1 font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 ${isLoading || !manualLocation.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg hover:shadow-xl'
+                        }`}
                     >
                       {isLoading ? (
                         <>
@@ -917,7 +930,7 @@ const LocationPermission = ({ onNext, onBack, onboardingData, updateData }) => {
           >
             ← Back
           </button>
-          
+
           {locationState === 'success' && (
             <motion.button
               onClick={handleNext}
